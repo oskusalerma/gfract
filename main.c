@@ -1129,7 +1129,7 @@ int main (int argc, char** argv)
                                      GTK_PROGRESS_LEFT_TO_RIGHT);
     gtk_progress_configure(GTK_PROGRESS(pbar), 0.0, 0.0,
                            (gfloat)img.real_height);
-    gtk_widget_set_usize(pbar, 75, 0);
+    gtk_widget_set_usize(pbar, 50, 0);
     gtk_box_pack_end(GTK_BOX(hbox), pbar, FALSE, FALSE, 0);
 
     /* separator */
