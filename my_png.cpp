@@ -64,11 +64,11 @@ void save_file(image_info* img, char* filename)
     if (setjmp(png_ptr->jmpbuf)) {
         fprintf(stderr, "Internal error in libpng\n");
         if (png_pal)
-            g_free(png_pal);
+            delete[] png_pal;
         if (row_p)
-            g_free(row_p);
+            delete[] row_p;
         if (pal_data)
-            g_free(pal_data);
+            delete[] pal_data;
         png_destroy_write_struct(&png_ptr, &info_ptr);
         fclose(fp);
 
@@ -133,10 +133,10 @@ void save_file(image_info* img, char* filename)
 
     png_write_end(png_ptr, info_ptr);
     if (pal) {
-        g_free(png_pal);
-        g_free(pal_data);
+        delete[] png_pal;
+        delete[] pal_data;
     }
-    g_free(row_p);
+    delete[] row_p;
     png_destroy_write_struct(&png_ptr, &info_ptr);
     fclose(fp);
 }

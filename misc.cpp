@@ -17,8 +17,8 @@ void set_image_info(image_info* img, int w, int h, int aa_factor)
         same_size = FALSE;
 
     if (!same_size)
-        g_free(img->rgb_data);
-    g_free(img->raw_data);
+        delete[] img->rgb_data;
+    delete[] img->raw_data;
 
     img->user_width = w;
     img->user_height = h;

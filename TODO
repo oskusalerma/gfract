@@ -15,7 +15,7 @@ palette has different count to last, automatically recalculate image
 coloring without recalculating image (needs 12 bytes per pixel -> huge
 amounts of memory needed)
 
--use long double?
+-use long double? (~30% slower)
 
 -good coloring formulas:
 
