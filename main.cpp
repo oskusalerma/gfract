@@ -2,19 +2,21 @@
 #include <stdlib.h>
 #include <string.h>
 #include <signal.h>
+#include <algorithm>
 #include <unistd.h>
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <time.h>
 #include <gdk/gdkkeysyms.h>
 #include <gdk/gdkx.h>
+#include "attr_dlg.h"
+#include "color_dlg.h"
 #include "externs.h"
 #include "fractal_types.h"
-#include "palette.h"
 #include "misc.h"
-#include "attr_dlg.h"
-#include "pal_rot_dlg.h"
 #include "my_png.h"
+#include "pal_rot_dlg.h"
+#include "palette.h"
 #include "timer.h"
 #include "version.h"
 #include "zoom_in.xpm"
@@ -39,19 +41,8 @@
 #define JPRE_SIZE    160
 #define JPRE_AAFACTOR 2
 
-
 #define DUMP_COMMAND "--read-dump-from"
 #define DEFAULT_PALETTE_FILE "/usr/local/share/gfract/palettes/blues.map"
-
-/* why the fuck does gtk have to define these in its header files?
-   the glib/gdk/gtk combo is forgetting seriously that it's just a Yet
-   Another Widget Set, not a toolkit for every conceivable function
-   you might someday have a need for... */
-#undef MIN
-#undef MAX
-
-#define MIN(x,y) ((x) < (y) ? (x) : (y))
-#define MAX(x,y) ((x) > (y) ? (x) : (y))
 
 struct status_info
 {
@@ -109,6 +100,9 @@ static void print_version(void);
 static void image_attr_ok_cmd(GtkWidget* w, image_attr_dialog* dl);
 static void do_attr_dialog(void);
 
+/* coloring mode */
+static void do_color_dialog(void);
+
 /* palette loading */
 void reapply_palette(void);
 static void load_palette_cmd(void);
@@ -145,6 +139,7 @@ static char* program_name = NULL;
 /* DIALOG POINTERS */
 
 static image_attr_dialog* img_attr_dlg = NULL;
+static color_dialog* color_dlg = NULL;
 static palette_rotation_dialog* pal_rot_dlg = NULL;
 
 
@@ -386,8 +381,8 @@ GdkRectangle horiz_intersect(GdkRectangle* a1, GdkRectangle* a2)
     bx1 = a2->x;
     bx2 = a2->x + a2->width - 1;
 
-    cx1 = MAX(ax1,bx1);
-    cx2 = MIN(ax2,bx2);
+    cx1 = std::max(ax1,bx1);
+    cx2 = std::min(ax2,bx2);
 
     /* no overlap */
     if (cx2 < cx1)
@@ -454,6 +449,18 @@ void image_attr_ok_cmd(GtkWidget* w, image_attr_dialog* dl)
     gtk_widget_destroy(dl->dialog);
 }
 
+void main_refresh(void)
+{
+    start_rendering(&img);
+
+    resize_preview();
+    if (st.julia_browsing) {
+        gtk_widget_hide(j_pre_window);
+        gtk_widget_show(j_pre_window);
+        start_rendering(&j_pre);
+    }
+}
+
 /* change preview window to reflect possible new aspect ratio */
 void resize_preview(void)
 {
@@ -476,7 +483,6 @@ void resize_preview(void)
     gtk_drawing_area_size(GTK_DRAWING_AREA(j_pre.drawing_area), xw, yw);
 }
 
-
 void do_attr_dialog(void)
 {
     if (img_attr_dlg)
@@ -486,6 +492,14 @@ void do_attr_dialog(void)
     gtk_signal_connect(GTK_OBJECT(img_attr_dlg->ok_button), "clicked",
                        GTK_SIGNAL_FUNC(image_attr_ok_cmd),
                        img_attr_dlg);
+}
+
+void do_color_dialog(void)
+{
+    if (color_dlg)
+        return;
+
+    color_dlg_new(&color_dlg, &img);
 }
 
 void do_pal_rot_dialog(void)
@@ -605,6 +619,7 @@ void create_menus(GtkWidget* vbox)
     
     menu = gtk_menu_new();
     menu_add(menu, "Attributes...", do_attr_dialog);
+    menu_add(menu, "Coloring...", do_color_dialog);
     menu_add(menu, NULL, NULL);
     switch_menu_cmd = menu_add(menu, "Switch fractal type",
                              switch_fractal_type);

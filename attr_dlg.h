@@ -19,4 +19,4 @@ struct image_attr_dialog
 
 void attr_dlg_new(image_attr_dialog** ptr, image_info* img);
 
-#endif /* __ATTR_DLG_H */
+#endif

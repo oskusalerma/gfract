@@ -17,9 +17,7 @@ amounts of memory needed)
 
 -use long double? (~30% slower)
 
--good coloring formulas:
-
- iter real2 imag2 + 4.0 - +
+-apply nappi attr dialogiin
 
 POSSIBLY IN THE FUTURE:
 
