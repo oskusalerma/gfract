@@ -92,7 +92,6 @@ static GtkWidget* create_pixmap(GtkWidget* widget, char** xpm_data);
 
 static gint expose_event(GtkWidget* widget, GdkEventExpose* event,
                          image_info* img);
-static gint key_event(GtkWidget* widget, GdkEventKey* event);
 static gint button_press_event(GtkWidget* widget, GdkEventButton* event);
 static gint j_pre_delete(GtkWidget *widget, GdkEvent *event, gpointer data);
 static gint child_reaper(gpointer nothing);
@@ -952,20 +951,6 @@ gint expose_event(GtkWidget* widget, GdkEventExpose* event,
     return TRUE;
 }
 
-gint key_event(GtkWidget* widget, GdkEventKey* event)
-{
-    switch (event->keyval) {
-    case GDK_Escape:
-        if (st.julia_browsing)
-            stop_julia_browsing();
-        else
-            stop_rendering(&img);
-        break;
-    }
-    
-    return TRUE;
-}
-
 gint idle_callback(image_info* img)
 {
     int y_offset;
@@ -1038,8 +1023,6 @@ int main (int argc, char** argv)
     window = gtk_window_new(GTK_WINDOW_TOPLEVEL);
     gtk_window_set_policy(GTK_WINDOW(window), FALSE, FALSE, TRUE);
     gtk_widget_realize(window);
-    gtk_signal_connect(GTK_OBJECT(window), "key_press_event",
-                       GTK_SIGNAL_FUNC(key_event), NULL);
     
     /* preview window */
     j_pre_window = gtk_window_new(GTK_WINDOW_TOPLEVEL);
@@ -1095,8 +1078,7 @@ int main (int argc, char** argv)
     gtk_widget_show(button);
 
     /* depth spin-button */
-    adj = gtk_adjustment_new((gfloat)img.depth, 1.0,
-                                2147483647.0, 100, 100, 0.0);
+    adj = gtk_adjustment_new(img.depth, 1.0, 2147483647.0, 1, 100, 0.0);
     depth_spin = gtk_spin_button_new(GTK_ADJUSTMENT(adj), 0.0, 0.0);
     gtk_widget_set_usize(depth_spin, 70, 0);
     gtk_box_pack_start(GTK_BOX(hbox), depth_spin, FALSE, FALSE, 0);

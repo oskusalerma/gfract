@@ -1,8 +1,5 @@
 This file documents the keyboard shortcuts available.
 
-Main window:
- ESC : Stop julia preview mode or stop rendering the image.
-
 Palette cycling window:
  s   : stop
  f,b : cycle forward/backward
