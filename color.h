@@ -42,6 +42,12 @@ struct color_op
     double value;
 };
 
-double calculate_color(color_op* cops, int cops_nr, point_info* pi);
+struct color_ops
+{
+    int nr;
+    color_op ops[MAX_OPS];
+};
+
+double calculate_color(color_ops* ops, point_info* pi);
 
 #endif

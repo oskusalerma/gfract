@@ -70,9 +70,8 @@ struct image_info
     } u;
 
     /* coloring information */
-    int cops_nr;
-    color_op cops[MAX_OPS];
-    
+    color_ops color_out;
+    color_ops color_in;
 };
 
 void fractal_next_line(image_info* img);

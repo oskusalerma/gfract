@@ -324,15 +324,15 @@ void init_misc(void)
     img.fr_type = MANDELBROT;
     img.palette_ip = true;
 
-    img.cops_nr = 7;
-    img.cops[0].type = ITER;
-    img.cops[1].type = REAL2;
-    img.cops[2].type = IMAG2;
-    img.cops[3].type = PLUS;
-    img.cops[4].type = NUMBER_VALUE;
-    img.cops[5].value = 4.0;
-    img.cops[5].type = MINUS;
-    img.cops[6].type = PLUS;
+    img.color_out.nr = 7;
+    img.color_out.ops[0].type = ITER;
+    img.color_out.ops[1].type = REAL2;
+    img.color_out.ops[2].type = IMAG2;
+    img.color_out.ops[3].type = PLUS;
+    img.color_out.ops[4].type = NUMBER_VALUE;
+    img.color_out.ops[5].value = 4.0;
+    img.color_out.ops[5].type = MINUS;
+    img.color_out.ops[6].type = PLUS;
 
     /* init preview */
     j_pre.depth = 300;
@@ -351,8 +351,8 @@ void init_misc(void)
     j_pre.fr_type = JULIA;
     j_pre.palette_ip = false;
 
-    j_pre.cops_nr = 1;
-    j_pre.cops[0].type = ITER;
+    j_pre.color_out.nr = 1;
+    j_pre.color_out.ops[0].type = ITER;
     
     /* misc init */
     st.zooming = false;

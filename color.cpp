@@ -18,15 +18,15 @@ stack[sp - 2] = stack[sp - 2] op stack[sp - 1]; \
 sp--; \
 break
 
-double calculate_color(color_op* cops, int cops_nr, point_info* pi)
+double calculate_color(color_ops* ops, point_info* pi)
 {
     int sp = 0;
     double stack[MAX_STACK];
-    
-    color_op* cop = cops;
+
+    color_op* cop = ops->ops;
     int i;
     
-    for (i = 0; i < cops_nr; i++)
+    for (i = 0; i < ops->nr; i++)
     {
         switch (cop->type)
         {
@@ -71,7 +71,7 @@ double calculate_color(color_op* cops, int cops_nr, point_info* pi)
     }
     
     if (sp != 1)
-      printf("sp = %d\n", sp);
+      printf("invalid number of values left on stack: %d\n", sp);
 
     return stack[0];
 }

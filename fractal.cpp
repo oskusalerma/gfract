@@ -64,7 +64,7 @@ void fractal_next_line(image_info* img)
         pi.iter = z;
         
         img->raw_data[img->lines_done*img->real_width + i] =
-            calculate_color(img->cops, img->cops_nr, &pi);
+            calculate_color(&img->color_out, &pi);
     }
 
     img->lines_done++;
