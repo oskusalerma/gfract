@@ -12,13 +12,16 @@ void fractal_next_line(image_info* img)
     double c_re, c_im;
     double re,im;
     double re2,im2;
+    point_info pi;
     
     y = img->ymax - ((img->xmax - img->xmin)/(double)img->real_width)
         * (double)img->lines_done;
 
-    point_info pi;
     pi.y = y;
 
+    /* silence gcc warnings */
+    c_re = c_im = 0.0;
+    
     for (i=0; i < img->real_width; i++) {
         x = ((double)i/(double)img->real_width) *
             (img->xmax - img->xmin) + img->xmin;

@@ -26,7 +26,7 @@ typedef enum {
     DIVIDE,
 
     SQRT,
-    // MIN, MAX, FLOOR, CEIL, DUP etc
+    /** MIN, MAX, FLOOR, CEIL, DUP etc */
     SIN,
     COS,
     TAN

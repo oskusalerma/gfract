@@ -83,7 +83,7 @@ static int zoom_is_valid_size(void);
 static void quit(void);
 static void redraw_image(image_info* img);
 static void create_menus(GtkWidget* vbox);
-static GtkWidget* menu_add(GtkWidget* menu, char* name, void* func);
+static GtkWidget* menu_add(GtkWidget* menu, char* name, void (*func)(void));
 static void get_coords(double* x, double* y);
 static GdkRectangle horiz_intersect(GdkRectangle* a1, GdkRectangle* a2);
 static void my_fread(void* ptr, int size, FILE* fp);
@@ -327,8 +327,7 @@ void init_misc(void)
 
     img.cops_nr = 1;
     img.cops = malloc(img.cops_nr * sizeof(color_op));
-    int i = 0;
-    img.cops[i++].type = ITER;
+    img.cops[0].type = ITER;
 
     /* init preview */
     j_pre.depth = 300;
@@ -550,7 +549,7 @@ void get_coords(double* x, double* y)
             (img.xmax - img.xmin) + img.xmin;
 }
 
-GtkWidget* menu_add(GtkWidget* menu, char* name, void* func)
+GtkWidget* menu_add(GtkWidget* menu, char* name, void (*func)(void))
 {
     GtkWidget* item;
 

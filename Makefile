@@ -1,23 +1,27 @@
-CC=gcc
-#CFLAGS=-g -Wall
-CFLAGS=-O2 -Wall
-LIBS=-lpng -lz
+PROG := gfract
 
-PROGNAME=gfract
+CC := gcc
 
-OBJS=main.o color.o fractal.o palette.o globals.o misc.o attr_dlg.o \
-my_png.o pal_rot_dlg.o timer.o
-HEADERS=externs.h palette.h color.h misc.h fractal_types.h attr_dlg.h \
-my_png.h pal_rot_dlg.h timer.h version.h
+DEFS := -Wall -ansi -pedantic -D_GNU_SOURCE
+DEFS := $(shell pkg-config --cflags gtk+-2.0) $(DEFS)
 
-$(PROGNAME): $(OBJS)
-	$(CC) `pkg-config --cflags gtk+-2.0` $(CFLAGS) $(OBJS) -o $(PROGNAME) \
-	`pkg-config --libs gtk+-2.0` $(LIBS)
+CFLAGS := $(DEFS) -O2
+#CFLAGS := $(DEFS) -Og
 
-%.o : %.c $(HEADERS)
-	$(CC) `pkg-config --cflags gtk+-2.0` $(CFLAGS) -c $<
+LDFLAGS := -lpng -lz
+LDFLAGS := $(shell pkg-config --libs gtk+-2.0) $(LDFLAGS)
 
-main.o: main.c $(HEADERS) *.xpm
+SRC := $(wildcard *.c)
+OBJS := $(patsubst %.c, %.o, $(SRC))
+HEADERS := $(wildcard *.h *.xpm)
+
+$(PROG): $(OBJS)
+	@echo Linking $(PROG)
+	@$(CC) $(CFLAGS) $(OBJS) $(LDFLAGS) -o $(PROG)
+
+%.o: %.c $(HEADERS)
+	@echo Compiling $<
+	@$(CC) $(CFLAGS) -c $< -o $@
 
 clean:
-	rm -f $(PROGNAME) $(OBJS)
+	rm -f $(PROG) $(OBJS)

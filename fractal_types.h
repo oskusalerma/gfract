@@ -5,9 +5,6 @@
 #include "color.h"
 
 typedef struct {
-} mandel_info;
-
-typedef struct {
     double c_re;
     double c_im;
 } julia_info;
@@ -69,7 +66,6 @@ typedef struct {
     
     /* different fractal types' parameters */
     union {
-        mandel_info mandel;
         julia_info julia;
     } u;
 } image_info;

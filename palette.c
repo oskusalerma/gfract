@@ -106,7 +106,7 @@ guint32 get_pixel(image_info* img, int x, int y)
     
         val = img->raw_data[y*img->real_width + x];
 
-        // FIXME: optimize this
+        /** FIXME: optimize this */
         
         cval = ceil(val);
         diff = cval - val;
