@@ -1,6 +1,9 @@
 #ifndef GFRACT_COLOR_H
 #define GFRACT_COLOR_H
 
+/** maximum number of operations */
+#define MAX_OPS 256
+
 typedef struct
 {
     double x, y;

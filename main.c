@@ -326,7 +326,6 @@ void init_misc(void)
     img.palette_ip = 0;
 
     img.cops_nr = 1;
-    img.cops = malloc(img.cops_nr * sizeof(color_op));
     img.cops[0].type = ITER;
 
     /* init preview */
@@ -347,7 +346,6 @@ void init_misc(void)
     img.palette_ip = 0;
 
     j_pre.cops_nr = 1;
-    j_pre.cops = malloc(sizeof(color_op));
     j_pre.cops->type = ITER;
     
     /* misc init */

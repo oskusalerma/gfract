@@ -57,10 +57,6 @@ typedef struct {
     /* fractal type */
     fractal_type fr_type;
 
-    /* coloring information */
-    int cops_nr;
-    color_op* cops;
-
     /* 1 if palette interpolation should be used. */
     int palette_ip;
     
@@ -68,6 +64,11 @@ typedef struct {
     union {
         julia_info julia;
     } u;
+
+    /* coloring information */
+    int cops_nr;
+    color_op cops[MAX_OPS];
+    
 } image_info;
 
 void fractal_next_line(image_info* img);
