@@ -325,17 +325,17 @@ void init_misc(void)
     img.palette_ip = true;
 
     img.color_out.nr = 7;
-    img.color_out.ops[0].type = ITER;
-    img.color_out.ops[1].type = REAL2;
-    img.color_out.ops[2].type = IMAG2;
-    img.color_out.ops[3].type = PLUS;
-    img.color_out.ops[4].type = NUMBER_VALUE;
+    img.color_out.ops[0].type = OP_ITER;
+    img.color_out.ops[1].type = OP_REAL2;
+    img.color_out.ops[2].type = OP_IMAG2;
+    img.color_out.ops[3].type = OP_PLUS;
+    img.color_out.ops[4].type = OP_NUMBER;
     img.color_out.ops[5].value = 4.0;
-    img.color_out.ops[5].type = MINUS;
-    img.color_out.ops[6].type = PLUS;
+    img.color_out.ops[5].type = OP_MINUS;
+    img.color_out.ops[6].type = OP_PLUS;
 
     img.color_in.nr = 1;
-    img.color_in.ops[0].type = NUMBER_VALUE;
+    img.color_in.ops[0].type = OP_NUMBER;
     img.color_in.ops[0].value = 0.0;
 
     /* init preview */
@@ -356,10 +356,10 @@ void init_misc(void)
     j_pre.palette_ip = false;
 
     j_pre.color_out.nr = 1;
-    j_pre.color_out.ops[0].type = ITER;
+    j_pre.color_out.ops[0].type = OP_ITER;
     
     j_pre.color_in.nr = 1;
-    j_pre.color_in.ops[0].type = NUMBER_VALUE;
+    j_pre.color_in.ops[0].type = OP_NUMBER;
     j_pre.color_in.ops[0].value = 0.0;
     
     /* misc init */

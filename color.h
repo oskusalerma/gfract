@@ -13,27 +13,32 @@ struct point_info
 
 enum op_type
 {
-    ITER,
-    REAL,
-    REAL2,
-    IMAG,
-    IMAG2,
-    XPOS,
-    YPOS,
-
-    NUMBER_VALUE,
-    PALETTE_COUNT,
+    OP_ITER,
+    OP_REAL,
+    OP_REAL2,
+    OP_IMAG,
+    OP_IMAG2,
+    OP_XPOS,
+    OP_YPOS,
+    OP_PALETTE_COUNT,
+    OP_NUMBER,
     
-    PLUS,
-    MINUS,
-    MULTIPLY,
-    DIVIDE,
+    OP_DUP,
+    
+    OP_PLUS,
+    OP_MINUS,
+    OP_MULTIPLY,
+    OP_DIVIDE,
 
-    SQRT,
-    /** MIN, MAX, FLOOR, CEIL, DUP etc */
-    SIN,
-    COS,
-    TAN
+    OP_MIN,
+    OP_MAX,
+    
+    OP_SQRT,
+    OP_FLOOR,
+    OP_CEIL,
+    OP_SIN,
+    OP_COS,
+    OP_TAN
 };
 
 struct color_op
