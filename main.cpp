@@ -334,6 +334,10 @@ void init_misc(void)
     img.color_out.ops[5].type = MINUS;
     img.color_out.ops[6].type = PLUS;
 
+    img.color_in.nr = 1;
+    img.color_in.ops[0].type = NUMBER_VALUE;
+    img.color_in.ops[0].value = 0.0;
+
     /* init preview */
     j_pre.depth = 300;
     j_pre.rgb_data = NULL;
@@ -353,6 +357,10 @@ void init_misc(void)
 
     j_pre.color_out.nr = 1;
     j_pre.color_out.ops[0].type = ITER;
+    
+    j_pre.color_in.nr = 1;
+    j_pre.color_in.ops[0].type = NUMBER_VALUE;
+    j_pre.color_in.ops[0].value = 0.0;
     
     /* misc init */
     st.zooming = false;

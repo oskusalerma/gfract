@@ -52,9 +52,18 @@ void fractal_next_line(image_info* img)
             if ( (re2+im2) > 4)
                 break;
         }
+
+        color_ops* ops;
         
         if (z == img->depth)
+        {
             z = 0;
+            ops = &img->color_in;
+        }
+        else
+        {
+            ops = &img->color_out;
+        }
 
         pi.re = re;
         pi.re2 = re2;
@@ -64,7 +73,7 @@ void fractal_next_line(image_info* img)
         pi.iter = z;
         
         img->raw_data[img->lines_done*img->real_width + i] =
-            calculate_color(&img->color_out, &pi);
+            calculate_color(ops, &pi);
     }
 
     img->lines_done++;
