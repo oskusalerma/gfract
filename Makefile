@@ -2,7 +2,7 @@ PROG := gfract
 
 CC := g++
 
-DEFS := -Wall -ansi -pedantic -D_GNU_SOURCE
+DEFS := -Wall -ansi -pedantic -D_GNU_SOURCE -DGDK_DISABLE_DEPRECATED
 DEFS := $(shell pkg-config --cflags gtk+-2.0) $(DEFS)
 
 CXXFLAGS := $(DEFS) -O2

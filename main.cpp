@@ -396,12 +396,13 @@ GdkRectangle horiz_intersect(GdkRectangle* a1, GdkRectangle* a2)
 
 void redraw_image(image_info* img)
 {
-    gdk_draw_rgb_32_image(img->drawing_area->window,
-                          img->drawing_area->style->white_gc,
-                          0, 0, img->user_width, img->user_height,
-                          GDK_RGB_DITHER_NONE,
-                          (uint8_t*)img->rgb_data,
-                          img->user_width*4);
+    GdkRectangle rect;
+
+    rect.x = rect.y = 0;
+    rect.width = img->user_width;
+    rect.height = img->user_height;
+
+    gdk_window_invalidate_rect(img->drawing_area->window, &rect, TRUE);
 }
 
 gint do_palette_rotation(bool forward)
@@ -990,26 +991,32 @@ gint idle_callback(image_info* img)
     }
 
     y_offset = img->lines_done/img->aa_factor-1;
-    gdk_draw_rgb_32_image(img->drawing_area->window,
-        img->drawing_area->style->white_gc,
-        0, y_offset, img->user_width, 1,
-        GDK_RGB_DITHER_NONE,
-        (uint8_t*)(&(img->rgb_data[img->user_width * y_offset])),
-        img->user_width * 4);
 
+    GdkRectangle rect;
+    
+    rect.x = 0;
+    rect.width = img->user_width;
+    rect.y = y_offset;
+    rect.height = 1;
+
+    gdk_window_invalidate_rect(img->drawing_area->window, &rect, TRUE);
+    
     if (!img->j_pre)
     {
         gtk_progress_bar_set_fraction(GTK_PROGRESS_BAR(pbar),
             (float)img->lines_done / img->real_height);
     }
     
-    if (img->lines_done == img->real_height) {
+    if (img->lines_done == img->real_height)
+    {
         stop_rendering(img);
 
         return FALSE;
     }
     else
+    {
         return TRUE;
+    }
 }
 
 void quit(void)
@@ -1028,8 +1035,6 @@ int main (int argc, char** argv)
     program_name = argv[0];
     gtk_init(&argc, &argv);
 
-    gdk_rgb_init();
-    
     if (!palette_load(DEFAULT_PALETTE_FILE)) {
         fprintf(stderr, "Can't load palette file %s\n",
                 DEFAULT_PALETTE_FILE);
