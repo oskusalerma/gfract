@@ -1,10 +1,47 @@
+#include <stdarg.h>
 #include <stdio.h>
 #include "externs.h"
 #include "fractal_types.h"
 #include "misc.h"
 #include "palette.h"
 
+static void vstrf(std::string* str, const char* format, va_list ap);
 static void do_aa_pixel(image_info* img, int x, int y);
+
+std::string strf(const char* format, ...)
+{
+    va_list ap;
+    std::string str;
+    
+    va_start(ap, format);
+    vstrf(&str, format, ap);
+    va_end(ap);
+    
+    return str;
+}
+
+void vstrf(std::string* str, const char* format, va_list ap)
+{
+    char buf[4096];
+    int ret;
+
+    ret = vsnprintf(buf, sizeof(buf), format, ap);
+    if (ret >= (int)sizeof(buf))
+    {
+        char* buf2 = new char[ret+1];
+        vsnprintf(buf2, ret+1, format, ap);
+        *str = buf2;
+        delete[] buf2;
+    }
+    else if (ret == -1)
+    {
+        *str = "vsnprintf failed";
+    }
+    else
+    {
+        *str = buf;
+    }
+}
 
 void set_image_info(image_info* img, int w, int h, int aa_factor)
 {

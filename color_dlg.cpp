@@ -87,13 +87,17 @@ void color_dlg_new(color_dialog** ptr, image_info* img)
     gtk_container_set_border_width(GTK_CONTAINER(tbox), 10);
     
     dl->out_label = gtk_entry_new();
+    gtk_entry_set_text(GTK_ENTRY(dl->out_label),
+        ops2str(&img->color_out).c_str());
     gtk_box_pack_start(GTK_BOX(tbox), dl->out_label, TRUE, TRUE, 0);
-    
+        
     tbox = gtk_vbox_new(FALSE, 0);
     gtk_container_add(GTK_CONTAINER(in_frame), tbox);
     gtk_container_set_border_width(GTK_CONTAINER(tbox), 10);
     
     dl->in_label = gtk_entry_new();
+    gtk_entry_set_text(GTK_ENTRY(dl->in_label),
+        ops2str(&img->color_in).c_str());
     gtk_box_pack_start(GTK_BOX(tbox), dl->in_label, TRUE, TRUE, 0);
 
     gtk_widget_show_all(dl->dialog);

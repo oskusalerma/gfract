@@ -1,6 +1,8 @@
 #ifndef GFRACT_COLOR_H
 #define GFRACT_COLOR_H
 
+#include <string>
+
 /** maximum number of operations */
 #define MAX_OPS 256
 
@@ -54,5 +56,6 @@ struct color_ops
 };
 
 double calculate_color(color_ops* ops, point_info* pi);
+std::string ops2str(color_ops* ops);
 
 #endif

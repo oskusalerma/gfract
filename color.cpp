@@ -1,9 +1,11 @@
 #include <stdio.h>
 #include <math.h>
 #include <algorithm>
-#include <string>
 #include "externs.h"
+#include "misc.h"
 #include "color.h"
+
+#define NELEMS(arr) (sizeof(arr) / sizeof(arr[0]))
 
 #define MAX_STACK 64
 
@@ -162,3 +164,44 @@ double calculate_color(color_ops* ops, point_info* pi)
 
     return stack[0];
 }
+
+std::string ops2str(color_ops* ops)
+{
+    std::string res;
+    
+    for (int i = 0; i < ops->nr; i++)
+    {
+        color_op* cop = &ops->ops[i];
+
+        bool found = false;
+        for (int j = 0; j < (int)NELEMS(op_info); j++)
+        {
+            op_info_t* oi = &op_info[j];
+            
+            if (cop->type == oi->type)
+            {
+                if (cop->type == OP_NUMBER)
+                {
+                    res += strf("%f", cop->value);
+                }
+                else
+                {
+                    res += oi->name;
+                }
+
+                found = true;
+                break;
+            }
+        }
+
+        if (!found)
+        {
+            res += strf("UNKNOWN_OPERATOR(%d)", cop->type);
+        }
+
+        res += " ";
+    }
+
+    return res;
+}
+

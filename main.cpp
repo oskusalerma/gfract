@@ -330,7 +330,7 @@ void init_misc(void)
     img.color_out.ops[2].type = OP_IMAG2;
     img.color_out.ops[3].type = OP_PLUS;
     img.color_out.ops[4].type = OP_NUMBER;
-    img.color_out.ops[5].value = 4.0;
+    img.color_out.ops[4].value = 4.0;
     img.color_out.ops[5].type = OP_MINUS;
     img.color_out.ops[6].type = OP_PLUS;
 
