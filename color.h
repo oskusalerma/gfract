@@ -34,8 +34,12 @@ enum op_type
 
     OP_MIN,
     OP_MAX,
-    
+    OP_POW,
+    OP_HYPOT,
+
     OP_SQRT,
+    OP_ABS,
+    OP_LN,
     OP_FLOOR,
     OP_CEIL,
     OP_SIN,
@@ -56,6 +60,12 @@ struct color_ops
 };
 
 double calculate_color(color_ops* ops, point_info* pi);
+
+// convert ops to string format
 std::string ops2str(color_ops* ops);
+
+// convert string to ops. on error, 'ops' is left in an undefined state
+// and an error string is returned, otherwise an empty string is returned.
+std::string str2ops(const std::string& str, color_ops* ops);
 
 #endif

@@ -6,7 +6,7 @@
 static void on_destroy(GtkWidget* widget, color_dialog* dl);
 static void on_refresh(GtkWidget* w, color_dialog* dl);
 static void do_refresh(color_dialog* dl, bool isApply);
-
+static bool update_cops(color_ops* ops, GtkWidget* w, color_dialog* dl);
 
 void on_destroy(GtkWidget* widget, color_dialog* dl)
 {
@@ -20,11 +20,39 @@ void on_refresh(GtkWidget* w, color_dialog* dl)
 
 void do_refresh(color_dialog* dl, bool isApply)
 {
+    if (!update_cops(&dl->img->color_out, dl->out_label, dl) ||
+        !update_cops(&dl->img->color_in, dl->in_label, dl))
+    {
+        return;
+    }
+    
     main_refresh();
     if (!isApply)
     {
         gtk_widget_destroy(dl->dialog);
     }
+}
+
+bool update_cops(color_ops* ops, GtkWidget* w, color_dialog* dl)
+{
+    color_ops tmp = *ops;
+    std::string str = gtk_entry_get_text(GTK_ENTRY(w));
+    std::string res = str2ops(str, &tmp);
+
+    if (res.length() == 0)
+    {
+        *ops = tmp;
+        
+        return true;
+    }
+
+    GtkWidget* dlg = gtk_message_dialog_new(GTK_WINDOW(dl->dialog),
+        GTK_DIALOG_DESTROY_WITH_PARENT, GTK_MESSAGE_ERROR,
+        GTK_BUTTONS_OK, "%s", res.c_str());
+    gtk_dialog_run(GTK_DIALOG(dlg));
+    gtk_widget_destroy(dlg);
+
+    return false;
 }
 
 void color_dlg_new(color_dialog** ptr, image_info* img)
@@ -38,8 +66,9 @@ void color_dlg_new(color_dialog** ptr, image_info* img)
     GtkWidget* tmp;
 
     dl = new color_dialog;
+    dl->img = img;
     *ptr = dl;
-
+    
     /* DIALOG AREA */
     dl->dialog = gtk_dialog_new();
     gtk_signal_connect(GTK_OBJECT(dl->dialog), "destroy",

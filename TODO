@@ -1,25 +1,15 @@
-RIGHT NOW:
-
--coloring algos
-
- -gui
-
-  -checking for validity
-
- -saving/loading these
+-saving/loading coloring algorithms
 
 -when loading new palette, if coloring algo uses PALETTE_COUNT, and new
  palette has different count to last, automatically recalculate image
-
--optionally store iter/re/im for each calculated pixel, so you can tweak
- coloring without recalculating image (needs 12 bytes per pixel -> huge
- amounts of memory needed)
 
 -use long double? (~30% slower)
 
 -add apply button to attr dialog
 
-MEDIUM TERM:
+-optionally store iter/re/im for each calculated pixel, so you can tweak
+ coloring without recalculating image (needs 12 bytes per pixel -> lots
+ of memory needed for large AA values)
 
 -remove all usage of deprecated GTK APIs. most places can be found by
  adding -DGTK_DISABLE_DEPRECATED to compile flags

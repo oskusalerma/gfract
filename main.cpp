@@ -27,8 +27,8 @@
 /* percentage of image width that zoom box starts at */
 #define ZOOM_BOX_WIDTH 0.35
 
-#define DEFAULT_WIDTH    480
-#define DEFAULT_HEIGHT   360
+#define DEFAULT_WIDTH    800
+#define DEFAULT_HEIGHT   600
 #define DEFAULT_AAFACTOR 1
 
 #define MIN_WINDOW_WIDTH 320

@@ -44,20 +44,22 @@ void fractal_next_line(image_info* img)
             break;
         }
         
-        for (z=0; z < img->depth; z++) {
-            im = 2.0*re*im+c_im;
-            re = re2-im2+c_re;
-            re2 = re*re;
-            im2 = im*im;
-            if ( (re2+im2) > 4)
+        for (z = 0; z < img->depth; z++)
+        {
+            im = 2.0 * re * im + c_im;
+            re = re2 - im2 + c_re;
+            re2 = re * re;
+            im2 = im * im;
+            if ((re2 + im2) > 4.0)
+            {
                 break;
+            }
         }
 
         color_ops* ops;
         
         if (z == img->depth)
         {
-            z = 0;
             ops = &img->color_in;
         }
         else
@@ -69,7 +71,6 @@ void fractal_next_line(image_info* img)
         pi.re2 = re2;
         pi.im = im;
         pi.im2 = im2;
-
         pi.iter = z;
         
         img->raw_data[img->lines_done*img->real_width + i] =

@@ -43,6 +43,39 @@ void vstrf(std::string* str, const char* format, va_list ap)
     }
 }
 
+void split(const std::string& str, std::vector<std::string>* vec)
+{
+    std::string tmp;
+
+    vec->clear();
+    
+    const char* data = str.c_str();
+    while (*data)
+    {
+        int ch = *data;
+
+        if (ch == ' ')
+        {
+            if (tmp.size() > 0)
+            {
+                vec->push_back(tmp);
+                tmp = "";
+            }
+        }
+        else
+        {
+            tmp += ch;
+        }
+        
+        data++;
+    }
+
+    if (tmp.size() > 0)
+    {
+        vec->push_back(tmp);
+    }
+}
+
 void set_image_info(image_info* img, int w, int h, int aa_factor)
 {
     bool same_size;

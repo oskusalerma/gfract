@@ -2,11 +2,14 @@
 #define __MISC_H
 
 #include <string>
+#include <vector>
 
 struct image_info;
 
 std::string strf(const char* format, ...)
     __attribute__ ((format (printf, 1, 2)));
+
+void split(const std::string& str, std::vector<std::string>* vec);
 
 void set_image_info(image_info* img, int w, int h, int aa_factor);
 void clear_image(image_info* img, bool raw, bool rgb);

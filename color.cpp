@@ -1,5 +1,5 @@
-#include <stdio.h>
 #include <math.h>
+#include <stdio.h>
 #include <algorithm>
 #include "externs.h"
 #include "misc.h"
@@ -63,8 +63,12 @@ op_info_t op_info[] = {
     
     {"min", OP_MIN, 2, -1},
     {"max", OP_MAX, 2, -1},
-    
+    {"pow", OP_POW, 2, -1},
+    {"hypot", OP_HYPOT, 2, -1},
+     
     {"sqrt", OP_SQRT, 1, 0},
+    {"abs", OP_ABS, 1, 0},
+    {"ln", OP_LN, 1, 0},
     {"floor", OP_FLOOR, 1, 0},
     {"ceil", OP_CEIL, 1, 0},
     {"sin", OP_SIN, 1, 0},
@@ -132,9 +136,21 @@ double calculate_color(color_ops* ops, point_info* pi)
         case OP_MAX:
             OP2_pm1(std::max);
 
+        case OP_POW:
+            OP2_pm1(pow);
+
+        case OP_HYPOT:
+            OP2_pm1(hypot);
+
         
         case OP_SQRT:
             OP1_0(sqrt);
+            
+        case OP_ABS:
+            OP1_0(fabs);
+            
+        case OP_LN:
+            OP1_0(log);
             
         case OP_FLOOR:
             OP1_0(floor);
@@ -205,3 +221,70 @@ std::string ops2str(color_ops* ops)
     return res;
 }
 
+std::string str2ops(const std::string& str, color_ops* ops)
+{
+    std::vector<std::string> vec;
+
+    split(str, &vec);
+
+    if (vec.size() > MAX_OPS)
+    {
+        return strf("Too many operations (%d, max is %d)", vec.size(),
+            MAX_OPS);
+    }
+
+    int stack = 0;
+    
+    for (int i = 0; i < (int)vec.size(); i++)
+    {
+        std::string item = vec[i];
+        std::string err = strf("Error at operation %d ('%s'):\n", i + 1,
+            item.c_str());
+        
+        bool found = false;
+        for (int j = 0; j < (int)NELEMS(op_info); j++)
+        {
+            op_info_t* oi = &op_info[j];
+            
+            if (item == oi->name)
+            {
+                if (stack < oi->req)
+                {
+                    return err + strf("Need %d values, but stack only has %d",
+                        oi->req, stack);
+                }
+
+                ops->ops[i].type = oi->type;
+                stack += oi->delta;
+                
+                found = true;
+                break;
+            }
+        }
+
+        if (!found)
+        {
+            const char* s = item.c_str();
+            char* end;
+            double tmp = strtod(s, &end);
+
+            if ((end == s) || (end != (s + strlen(s))))
+            {
+                return err + "Unknown operation";
+            }
+            
+            ops->ops[i].type = OP_NUMBER;
+            ops->ops[i].value = tmp;
+            stack++;
+        }
+    }
+
+    if (stack != 1)
+    {
+        return strf("Algorithm leaves %d values on stack", stack);
+    }
+    
+    ops->nr = vec.size();
+
+    return "";
+}

@@ -5,7 +5,7 @@ CC := g++
 DEFS := -Wall -ansi -pedantic -D_GNU_SOURCE -DGDK_DISABLE_DEPRECATED
 DEFS := $(shell pkg-config --cflags gtk+-2.0) $(DEFS)
 
-CXXFLAGS := $(DEFS) -O2
+CXXFLAGS := $(DEFS) -O2 -fomit-frame-pointer -ffast-math
 #CXXFLAGS := $(DEFS) -g
 
 LDFLAGS := -lpng -lz
