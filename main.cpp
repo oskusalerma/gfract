@@ -85,6 +85,7 @@ static GtkWidget* create_pixmap(GtkWidget* widget, char** xpm_data);
 
 static gint expose_event(GtkWidget* widget, GdkEventExpose* event,
                          image_info* img);
+static gint key_event(GtkWidget* widget, GdkEventKey* event);
 static gint button_press_event(GtkWidget* widget, GdkEventButton* event);
 static gint j_pre_delete(GtkWidget *widget, GdkEvent *event, gpointer data);
 static gint child_reaper(gpointer nothing);
@@ -846,6 +847,8 @@ void toggle_palette_ip(GtkWidget* widget)
 
 gint button_press_event(GtkWidget* widget, GdkEventButton* event)
 {
+    gtk_widget_grab_focus(img.drawing_area);
+    
     /* ignore double- and triple clicks */
     if ( (event->type == GDK_2BUTTON_PRESS) ||
          (event->type == GDK_3BUTTON_PRESS) )
@@ -988,6 +991,25 @@ gint expose_event(GtkWidget* widget, GdkEventExpose* event,
     return TRUE;
 }
 
+gint key_event(GtkWidget* widget, GdkEventKey* event)
+{
+    int ret = FALSE;
+    
+    switch (event->keyval)
+    {
+    case GDK_Return:
+        if (st.zooming)
+        {
+            zoom_in();
+            ret = TRUE;
+        }
+        
+        break;
+    }
+    
+    return ret;
+}
+
 gint idle_callback(image_info* img)
 {
     int y_offset;
@@ -1066,7 +1088,7 @@ int main (int argc, char** argv)
     window = gtk_window_new(GTK_WINDOW_TOPLEVEL);
     gtk_window_set_resizable(GTK_WINDOW(window), FALSE);
     gtk_widget_realize(window);
-    
+
     /* preview window */
     j_pre_window = gtk_window_new(GTK_WINDOW_TOPLEVEL);
     g_signal_connect(GTK_OBJECT(j_pre_window), "delete_event",
@@ -1160,15 +1182,17 @@ int main (int argc, char** argv)
 
     /* main window drawing area */
     tmp = gtk_drawing_area_new();
-    gtk_widget_set_events (tmp, GDK_BUTTON_PRESS_MASK
-                           | GDK_BUTTON_RELEASE_MASK
-                           | GDK_POINTER_MOTION_MASK
-                           | GDK_EXPOSURE_MASK);
+    GTK_WIDGET_SET_FLAGS(tmp, GTK_CAN_FOCUS);
+    gtk_widget_set_events (tmp, GDK_KEY_PRESS_MASK |
+        GDK_BUTTON_PRESS_MASK | GDK_BUTTON_RELEASE_MASK |
+        GDK_POINTER_MOTION_MASK | GDK_EXPOSURE_MASK);
     gtk_widget_set_size_request(tmp, (img.user_width >= MIN_WINDOW_WIDTH) 
                 ? img.user_width : MIN_WINDOW_WIDTH, img.user_height);
     gtk_box_pack_start(GTK_BOX(vbox), tmp, TRUE, TRUE, 0);
     gtk_widget_show(tmp);
     
+    g_signal_connect(GTK_OBJECT(tmp), "key_press_event",
+        GTK_SIGNAL_FUNC(key_event), NULL);
     g_signal_connect(GTK_OBJECT(tmp), "button_press_event",
                         (GtkSignalFunc)button_press_event, NULL);
     g_signal_connect(GTK_OBJECT(tmp), "button_release_event",
