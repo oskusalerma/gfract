@@ -1,21 +1,23 @@
 CC=gcc
 #CFLAGS=-g -Wall
-CFLAGS=-O2 -Wall -Winline
+CFLAGS=-O2 -Wall
 LIBS=-lpng -lz
 
-OBJS=main.o fractal.o palette.o globals.o misc.o attr_dlg.o my_png.o \
-pal_rot_dlg.o timer.o color.o
-HEADERS=externs.h palette.h misc.h fractal_types.h attr_dlg.h my_png.h \
-pal_rot_dlg.h timer.h version.h color.h
+PROGNAME=gfract
 
-gfract: $(OBJS)
-	$(CC) `gtk-config --cflags` $(CFLAGS) $(OBJS) -o gfract \
-`gtk-config --libs` $(LIBS)
+OBJS=main.o color.o fractal.o palette.o globals.o misc.o attr_dlg.o \
+my_png.o pal_rot_dlg.o timer.o
+HEADERS=externs.h palette.h color.h misc.h fractal_types.h attr_dlg.h \
+my_png.h pal_rot_dlg.h timer.h version.h
+
+$(PROGNAME): $(OBJS)
+	$(CC) `pkg-config --cflags gtk+-2.0` $(CFLAGS) $(OBJS) -o $(PROGNAME) \
+	`pkg-config --libs gtk+-2.0` $(LIBS)
 
 %.o : %.c $(HEADERS)
-	$(CC) `gtk-config --cflags` $(CFLAGS) -c $<
+	$(CC) `pkg-config --cflags gtk+-2.0` $(CFLAGS) -c $<
 
 main.o: main.c $(HEADERS) *.xpm
 
 clean:
-	rm -f gfract $(OBJS)
+	rm -f $(PROGNAME) $(OBJS)

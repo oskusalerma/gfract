@@ -265,7 +265,7 @@ void reapply_palette(void)
 
 void palette_apply_cmd(GtkWidget* w, GtkFileSelection* fs)
 {
-    if (palette_load(gtk_file_selection_get_filename(fs)) == FALSE) {
+    if (palette_load((char*)gtk_file_selection_get_filename(fs)) == FALSE) {
         fprintf(stderr, "Invalid palette file %s\n",
                 gtk_file_selection_get_filename(fs));
     } else {
@@ -466,8 +466,7 @@ void resize_preview(void)
     }
     
     set_image_info(&j_pre, xw, yw, JPRE_AAFACTOR);
-    gtk_drawing_area_size(GTK_DRAWING_AREA(j_pre.drawing_area),
-                          xw, yw);
+    gtk_drawing_area_size(GTK_DRAWING_AREA(j_pre.drawing_area), xw, yw);
 }
 
 
@@ -585,7 +584,6 @@ void create_menus(GtkWidget* vbox)
     GtkWidget* menu_bar;
 
     menu_bar = gtk_menu_bar_new();
-    gtk_menu_bar_set_shadow_type(GTK_MENU_BAR(menu_bar), GTK_SHADOW_NONE);
     gtk_box_pack_start(GTK_BOX(vbox), menu_bar, FALSE, FALSE, 0);
     gtk_widget_show(menu_bar);
 
@@ -1016,7 +1014,7 @@ int main (int argc, char** argv)
     GtkWidget* hbox;
     GtkWidget* button;
     GtkWidget* tmp;
-    GtkAdjustment* adj;
+    GtkObject* adj;
     
     program_name = argv[0];
     gtk_init(&argc, &argv);
@@ -1044,7 +1042,7 @@ int main (int argc, char** argv)
                        GTK_SIGNAL_FUNC(key_event), NULL);
     
     /* preview window */
-    j_pre_window = gtk_window_new(GTK_WINDOW_DIALOG);
+    j_pre_window = gtk_window_new(GTK_WINDOW_TOPLEVEL);
     gtk_signal_connect(GTK_OBJECT(j_pre_window), "delete_event",
                        GTK_SIGNAL_FUNC(j_pre_delete), NULL);
     gtk_window_set_title(GTK_WINDOW(j_pre_window), "Preview");
@@ -1097,9 +1095,9 @@ int main (int argc, char** argv)
     gtk_widget_show(button);
 
     /* depth spin-button */
-    adj = (GtkAdjustment*)gtk_adjustment_new((gfloat)img.depth, 1.0,
-                                             2147483647.0, 1.0, 1.0, 0.0);
-    depth_spin = gtk_spin_button_new(adj, 0, 0);
+    adj = gtk_adjustment_new((gfloat)img.depth, 1.0,
+                                2147483647.0, 100, 100, 0.0);
+    depth_spin = gtk_spin_button_new(GTK_ADJUSTMENT(adj), 0.0, 0.0);
     gtk_widget_set_usize(depth_spin, 70, 0);
     gtk_box_pack_start(GTK_BOX(hbox), depth_spin, FALSE, FALSE, 0);
     gtk_widget_show(depth_spin);

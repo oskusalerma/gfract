@@ -115,7 +115,7 @@ void palette_rotation_dlg_new(palette_rotation_dialog** ptr,
     dl->idle_id = -1;
     *ptr = dl;
     
-    dl->window = gtk_window_new(GTK_WINDOW_DIALOG);
+    dl->window = gtk_window_new(GTK_WINDOW_TOPLEVEL);
     gtk_signal_connect(GTK_OBJECT(dl->window), "destroy",
                        GTK_SIGNAL_FUNC(pal_rot_destroy),
                        dl);

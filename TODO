@@ -15,6 +15,13 @@ palette has different count to last, automatically recalculate image
 coloring without recalculating image (needs 12 bytes per pixel -> huge
 amounts of memory needed)
 
+-use long double?
+
+-support palettes of more than 256 entries
+
+-duplicate is broken since you can't simply write coloring information out
+to disk. (maybe change it so that it can, using a fixed-width array?)
+
 POSSIBLY IN THE FUTURE:
 
 -Distributed rendering

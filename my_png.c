@@ -200,15 +200,15 @@ void ask_overwrite(image_info* img, char* filename)
 
 void overwrite_ok_cmd(GtkWidget* w, image_info* img)
 {
-    save_file(img, gtk_file_selection_get_filename(GTK_FILE_SELECTION
-                                                   (filesel)));
+    save_file(img, (char*)gtk_file_selection_get_filename(
+                  GTK_FILE_SELECTION(filesel)));
     gtk_widget_destroy(filesel);
 }
 
 static void my_png_ok(GtkWidget* w, image_info* img)
 {
-    char* filename = gtk_file_selection_get_filename(GTK_FILE_SELECTION
-                                                   (filesel));
+    char* filename = (char*)gtk_file_selection_get_filename(
+        GTK_FILE_SELECTION(filesel));
 
     if (file_exists(filename))
         ask_overwrite(img, filename);

@@ -68,8 +68,8 @@ void constrain_update(GtkWidget* w, image_attr_dialog* dl)
 {
     if (GTK_TOGGLE_BUTTON(dl->const_ra)->active) {
         dl->ratio =
-            gtk_spin_button_get_value_as_float(GTK_SPIN_BUTTON(dl->width)) /
-            gtk_spin_button_get_value_as_float(GTK_SPIN_BUTTON(dl->height));
+            gtk_spin_button_get_value(GTK_SPIN_BUTTON(dl->width)) /
+            gtk_spin_button_get_value(GTK_SPIN_BUTTON(dl->height));
     }
 }
 
@@ -126,7 +126,7 @@ void attr_dlg_new(image_attr_dialog** ptr, image_info* img)
     gtk_widget_show(tmp);
 
     
-    table = gtk_table_new(5, 2, FALSE);
+    table = gtk_table_new(8, 2, FALSE);
     gtk_table_set_row_spacings(GTK_TABLE(table), 2);
     gtk_table_set_row_spacing(GTK_TABLE(table), 2, 10);
     gtk_table_set_row_spacing(GTK_TABLE(table), 3, 15);
