@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <signal.h>
 #include <unistd.h>
 #include <sys/types.h>
@@ -108,6 +109,7 @@ static void image_attr_ok_cmd(GtkWidget* w, image_attr_dialog* dl);
 static void do_attr_dialog(void);
 
 /* palette loading */
+void reapply_palette(void);
 static void load_palette_cmd(void);
 static void palette_apply_cmd(GtkWidget* w, GtkFileSelection* fs);
 static void palette_ok_cmd(GtkWidget* w, GtkFileSelection* fs);
@@ -132,6 +134,7 @@ static GtkWidget* zoom_in_button = NULL;
 static GtkWidget* zoom_out_button = NULL;
 static GtkWidget* recalc_button_label = NULL;
 static GtkWidget* depth_spin = NULL;
+static GtkWidget* palette_ip = NULL;
 static GtkWidget* pbar = NULL;
 static GtkWidget* switch_menu_cmd = NULL;
 static int zoom_timer;
@@ -250,18 +253,23 @@ void switch_fractal_type(void)
     }
 }
 
+void reapply_palette(void)
+{
+    if (img.aa_factor == 1)
+        palette_apply(&img, 0, 0, img.user_width, img.user_height);
+    else
+        do_anti_aliasing(&img, 0, 0, img.user_width, img.user_height);
+    
+    redraw_image(&img);
+}
+
 void palette_apply_cmd(GtkWidget* w, GtkFileSelection* fs)
 {
     if (palette_load(gtk_file_selection_get_filename(fs)) == FALSE) {
         fprintf(stderr, "Invalid palette file %s\n",
                 gtk_file_selection_get_filename(fs));
     } else {
-        if (img.aa_factor == 1)
-            palette_apply(&img, 0, 0, img.user_width, img.user_height);
-        else
-            do_anti_aliasing(&img, 0, 0, img.user_width, img.user_height);
-        
-        redraw_image(&img);
+        reapply_palette();
     }
 }
 
@@ -316,6 +324,12 @@ void init_misc(void)
     img.idle_id = -1;
     img.j_pre = FALSE;
     img.fr_type = MANDELBROT;
+    img.palette_ip = 0;
+
+    img.cops_nr = 1;
+    img.cops = malloc(img.cops_nr * sizeof(color_op));
+    int i = 0;
+    img.cops[i++].type = ITER;
 
     /* init preview */
     j_pre.depth = 300;
@@ -332,7 +346,12 @@ void init_misc(void)
     j_pre.idle_id = -1;
     j_pre.j_pre = TRUE;
     j_pre.fr_type = JULIA;
+    img.palette_ip = 0;
 
+    j_pre.cops_nr = 1;
+    j_pre.cops = malloc(sizeof(color_op));
+    j_pre.cops->type = ITER;
+    
     /* misc init */
     st.zooming = FALSE;
     st.julia_browsing = FALSE;
@@ -527,6 +546,7 @@ void get_coords(double* x, double* y)
     if (y != NULL)
         *y = img.ymax - ((img.xmax - img.xmin)/(double)img.user_width)
             * (*y);
+    
     if (x != NULL)
         *x = ((*x)/(double)img.user_width) *
             (img.xmax - img.xmin) + img.xmin;
@@ -781,6 +801,12 @@ void recalc_button(GtkWidget* widget)
         start_rendering(&img);
     else
         stop_rendering(&img);
+}
+
+void toggle_palette_ip(GtkWidget* widget)
+{
+    img.palette_ip = GTK_TOGGLE_BUTTON(widget)->active;
+    reapply_palette();
 }
 
 gint button_press_event(GtkWidget* widget, GdkEventButton* event)
@@ -1078,6 +1104,15 @@ int main (int argc, char** argv)
     gtk_box_pack_start(GTK_BOX(hbox), depth_spin, FALSE, FALSE, 0);
     gtk_widget_show(depth_spin);
 
+    /* palette interpolation */
+    palette_ip = gtk_check_button_new_with_label("Palette interpolation");
+    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(palette_ip),
+        img.palette_ip);
+    gtk_box_pack_start(GTK_BOX(hbox), palette_ip, FALSE, FALSE, 0);
+    gtk_signal_connect(GTK_OBJECT(palette_ip), "toggled",
+        GTK_SIGNAL_FUNC(toggle_palette_ip), NULL);
+    gtk_widget_show(palette_ip);
+    
     /* recalc button */
     button = gtk_button_new();
     recalc_button_label = gtk_label_new(TEXT_STOP);

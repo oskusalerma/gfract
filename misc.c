@@ -35,7 +35,8 @@ void set_image_info(image_info* img, int w, int h, int aa_factor)
 
     if (!same_size)
         img->rgb_data = g_malloc(img->user_width*img->user_height*4);
-    img->raw_data = g_malloc(img->real_width*img->real_height*4);
+    img->raw_data = g_malloc(img->real_width*img->real_height *
+        sizeof(*img->raw_data));
 
     clear_image(img, TRUE, !same_size);
 }
@@ -46,7 +47,7 @@ void clear_image(image_info* img, gboolean raw, gboolean rgb)
 
     if (raw) {
         for (i=0; i < img->real_width*img->real_height; i++)
-            img->raw_data[i] = UINT_MAX;
+            img->raw_data[i] = 0.0;
     }
     if (rgb) {
         for (i=0; i < img->user_width*img->user_height; i++)

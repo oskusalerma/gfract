@@ -1,11 +1,24 @@
--Cropping
+RIGHT NOW:
 
--Palette editing.
+-coloring algos
 
--Multiple threads for rendering. Should allow a pretty linear increase
- in speed on SMP machines.
+ -gui
 
--Periodicity checking.
+  -checking for validity
 
--Investigate how to get rid of the clobber-warnings in my_png.c. Just
- adding volatile didn't work.
+ -saving/loading these
+
+-when loading new palette, if coloring algo uses PALETTE_COUNT, and new
+palette has different count to last, automatically recalculate image
+
+-optionally store iter/re/im for each calculated pixel, so you can tweak
+coloring without recalculating image (needs 12 bytes per pixel -> huge
+amounts of memory needed)
+
+POSSIBLY IN THE FUTURE:
+
+-Distributed rendering
+
+ -Multiple threads
+
+ -Multiple machines

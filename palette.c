@@ -1,3 +1,5 @@
+#include <math.h>
+#include <stdint.h>
 #include <stdio.h>
 #include <string.h>
 #include "externs.h"
@@ -95,13 +97,41 @@ void palette_rotate_forward(void)
 
 guint32 get_pixel(image_info* img, int x, int y)
 {
-    guint32 c;
+    if (img->palette_ip)
+    {
+        double val,cval,diff,rdiff;
+        int ind1,ind2;
+        guint32 c1,c2;
+        uint8_t r,g,b;
+    
+        val = img->raw_data[y*img->real_width + x];
 
-    c = img->raw_data[y*img->real_width + x];
-    if (c == UINT_MAX)
-        return palette[0];
+        // FIXME: optimize this
+        
+        cval = ceil(val);
+        diff = cval - val;
+        rdiff = 1.0 - diff;
+    
+        ind1 = ((guint32)floor(val)) % pal_indexes;
+        ind2 = (guint32)cval % pal_indexes;
+    
+        c1 = palette[ind1];
+        c2 = palette[ind2];
 
-    c = (c%(pal_indexes-1))+1;
+        r = diff * RED(c1) + rdiff * RED(c2);
+        g = diff * GREEN(c1) + rdiff * GREEN(c2);
+        b = diff * BLUE(c1) + rdiff * BLUE(c2);
 
-    return palette[c];
+        return RGB(r,g,b);
+    }
+    else
+    {
+        double c;
+        int index;
+    
+        c = img->raw_data[y*img->real_width + x];
+        index = (guint32)c % pal_indexes;
+
+        return palette[index];
+    }
 }

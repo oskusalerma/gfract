@@ -25,17 +25,15 @@ void save_file(image_info* img, char* filename)
     png_struct* png_ptr;
     png_info* info_ptr;
     gboolean pal;                /* TRUE if img is palettized */
-    gboolean interlace;          /* do we want interlacing. FALSE for now */
     int i;
     png_color* png_pal = NULL;
     guchar* pal_data = NULL;
     guchar** row_p = NULL;
     
-    if (img->aa_factor == 1)
+    if ((img->aa_factor == 1) && !img->palette_ip)
         pal = TRUE;
     else
         pal = FALSE;
-    interlace = FALSE;
     
     fp = fopen(filename, "w");
     if (fp == NULL) {
@@ -82,9 +80,9 @@ void save_file(image_info* img, char* filename)
     /* png_set_compression_level(png_ptr, 1-9); */
 
     png_set_IHDR(png_ptr, info_ptr, img->user_width, img->user_height,
-                 8, pal ? PNG_COLOR_TYPE_PALETTE : PNG_COLOR_TYPE_RGB,
-                 interlace ? PNG_INTERLACE_ADAM7 : PNG_INTERLACE_NONE,
-                 PNG_COMPRESSION_TYPE_DEFAULT, PNG_FILTER_TYPE_DEFAULT);
+        8, pal ? PNG_COLOR_TYPE_PALETTE : PNG_COLOR_TYPE_RGB,
+        PNG_INTERLACE_NONE, PNG_COMPRESSION_TYPE_DEFAULT,
+        PNG_FILTER_TYPE_DEFAULT);
 
     /* write palette */
     if (pal) {
@@ -100,22 +98,21 @@ void save_file(image_info* img, char* filename)
     png_write_info(png_ptr, info_ptr);
     if (!pal)
         png_set_filler(png_ptr, 0, PNG_FILLER_AFTER);
-
-    /* convert data to palette index format */
-    if (pal) {
+    else
+    {
+        /* convert data to palette index format */
+        
         int pixels = img->user_width * img->user_height;
         guchar* dst;
-        guint32* src;
-        
+        double* src;
+
         pal_data = g_malloc(pixels);
         dst = pal_data;
         src = img->raw_data;
 
         for (i=0; i < pixels; i++) {
-            if ((*src) == UINT_MAX)
-                *dst = 0;
-            else
-                *dst = ((*src)%(pal_indexes-1))+1;
+            *dst = (guint32)(*src) % pal_indexes;
+
             src++;
             dst++;
         }

@@ -16,9 +16,15 @@ void fractal_next_line(image_info* img)
     y = img->ymax - ((img->xmax - img->xmin)/(double)img->real_width)
         * (double)img->lines_done;
 
+    point_info pi;
+    pi.y = y;
+
     for (i=0; i < img->real_width; i++) {
         x = ((double)i/(double)img->real_width) *
             (img->xmax - img->xmin) + img->xmin;
+
+        pi.x = x;
+
         re = x;
         im = y;
         re2 = re*re;
@@ -45,9 +51,17 @@ void fractal_next_line(image_info* img)
         }
         
         if (z == img->depth)
-            z = UINT_MAX;
+            z = 0;
+
+        pi.re = re;
+        pi.re2 = re2;
+        pi.im = im;
+        pi.im2 = im2;
+
+        pi.iter = z;
         
-        img->raw_data[img->lines_done*img->real_width + i] = z;
+        img->raw_data[img->lines_done*img->real_width + i] =
+            calculate_color(img->cops, img->cops_nr, &pi);
     }
 
     img->lines_done++;

@@ -2,6 +2,7 @@
 #define __FRACTAL_TYPES_H
 
 #include <gtk/gtk.h>
+#include "color.h"
 
 typedef struct {
 } mandel_info;
@@ -33,7 +34,7 @@ typedef struct {
     int idle_id;
 
     /* actual data pointers */
-    guint32* raw_data;
+    double* raw_data;
     guint32* rgb_data;
 
     /* TRUE if we're a julia preview */
@@ -58,6 +59,13 @@ typedef struct {
 
     /* fractal type */
     fractal_type fr_type;
+
+    /* coloring information */
+    int cops_nr;
+    color_op* cops;
+
+    /* 1 if palette interpolation should be used. */
+    int palette_ip;
     
     /* different fractal types' parameters */
     union {
