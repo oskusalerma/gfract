@@ -7,15 +7,3 @@
     bugs, which don't affect anything, and you can cure them by
     switching off the zoom mode and changing desktops, therefore
     forcing a complete redraw.
-
-- Other annoyances
-
-  - You have to watch out for memory use yourself. If you don't have
-    enough memory for the image size you requested the program will
-    exit with an error message.
-
-  - Window Maker (version 0.50.2 at least) has very stupid and very
-    arbitrary limitations of 5 pixels in minimum window width or
-    height. This causes the preview window to not handle expose events
-    correctly if it's smaller than that in either direction. Doesn't
-    do any real harm, though.
