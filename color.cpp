@@ -41,39 +41,41 @@ struct op_info_t
 
     // by how much it modifies the stack size
     int delta;
+
+    std::string help;
 };
 
 op_info_t op_info[] = {
-    {"iter", OP_ITER, 0, 1},
-    {"real", OP_REAL, 0, 1},
-    {"real2", OP_REAL2, 0, 1},
-    {"imag", OP_IMAG, 0, 1},
-    {"imag2", OP_IMAG2, 0, 1},
-    {"xpos", OP_XPOS, 0, 1},
-    {"ypos", OP_YPOS, 0, 1},
-    {"palette_count", OP_PALETTE_COUNT, 0, 1},
-    {"", OP_NUMBER, 0, 1},
+    {"iter", OP_ITER, 0, 1, "iteration count"},
+    {"real", OP_REAL, 0, 1, "real"},
+    {"real2", OP_REAL2, 0, 1, "real^2"},
+    {"imag", OP_IMAG, 0, 1, "imag"},
+    {"imag2", OP_IMAG2, 0, 1, "imag^2"},
+    {"xpos", OP_XPOS, 0, 1, "x position"},
+    {"ypos", OP_YPOS, 0, 1, "y position"},
+    {"palette_count", OP_PALETTE_COUNT, 0, 1, "palette color count"},
+    {"", OP_NUMBER, 0, 1, "number"},
     
-    {"dup", OP_DUP, 1, 1},
+    {"dup", OP_DUP, 1, 1, "duplicate"},
     
-    {"+", OP_PLUS, 2, -1},
-    {"-", OP_MINUS, 2, -1},
-    {"*", OP_MULTIPLY, 2, -1},
-    {"/", OP_DIVIDE, 2, -1},
+    {"+", OP_PLUS, 2, -1, "plus"},
+    {"-", OP_MINUS, 2, -1, "minus"},
+    {"*", OP_MULTIPLY, 2, -1, "multiply"},
+    {"/", OP_DIVIDE, 2, -1, "divide"},
     
-    {"min", OP_MIN, 2, -1},
-    {"max", OP_MAX, 2, -1},
-    {"pow", OP_POW, 2, -1},
-    {"hypot", OP_HYPOT, 2, -1},
+    {"min", OP_MIN, 2, -1, "minimum"},
+    {"max", OP_MAX, 2, -1, "maximum"},
+    {"pow", OP_POW, 2, -1, "n^m"},
+    {"hypot", OP_HYPOT, 2, -1, "sqrt(n^2 + m^2)"},
      
-    {"sqrt", OP_SQRT, 1, 0},
-    {"abs", OP_ABS, 1, 0},
-    {"ln", OP_LN, 1, 0},
-    {"floor", OP_FLOOR, 1, 0},
-    {"ceil", OP_CEIL, 1, 0},
-    {"sin", OP_SIN, 1, 0},
-    {"cos", OP_COS, 1, 0},
-    {"tan", OP_TAN, 1, 0}
+    {"sqrt", OP_SQRT, 1, 0, "square root"},
+    {"abs", OP_ABS, 1, 0, "absolute value"},
+    {"ln", OP_LN, 1, 0, "natural logarithm"},
+    {"floor", OP_FLOOR, 1, 0, "floor"},
+    {"ceil", OP_CEIL, 1, 0, "ceiling"},
+    {"sin", OP_SIN, 1, 0, "sin"},
+    {"cos", OP_COS, 1, 0, "cos"},
+    {"tan", OP_TAN, 1, 0, "tan"}
 };
 
 double calculate_color(color_ops* ops, point_info* pi)
@@ -287,4 +289,18 @@ std::string str2ops(const std::string& str, color_ops* ops)
     ops->nr = vec.size();
 
     return "";
+}
+
+std::string get_cop_help(void)
+{
+    std::string str;
+    
+    for (int i = 0; i < (int)NELEMS(op_info); i++)
+    {
+        op_info_t* oi = &op_info[i];
+
+        str += strf("%s - %s\n", oi->name.c_str(), oi->help.c_str());
+    }
+
+    return str;
 }

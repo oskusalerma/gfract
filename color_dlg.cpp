@@ -4,6 +4,7 @@
 #include "main.h"
 
 static void on_destroy(GtkWidget* widget, color_dialog* dl);
+static void on_help(GtkWidget* widget, color_dialog* dl);
 static void on_refresh(GtkWidget* w, color_dialog* dl);
 static void do_refresh(color_dialog* dl, bool isApply);
 static bool update_cops(color_ops* ops, GtkWidget* w, color_dialog* dl);
@@ -11,6 +12,18 @@ static bool update_cops(color_ops* ops, GtkWidget* w, color_dialog* dl);
 void on_destroy(GtkWidget* widget, color_dialog* dl)
 {
     delete dl;
+}
+
+void on_help(GtkWidget* widget, color_dialog* dl)
+{
+    GtkWidget* dlg = gtk_message_dialog_new(NULL,
+        GTK_DIALOG_DESTROY_WITH_PARENT, GTK_MESSAGE_INFO,
+        GTK_BUTTONS_OK, "Available operations:\n\n%s",
+        get_cop_help().c_str());
+    
+    g_signal_connect_swapped(dlg, "response", G_CALLBACK(gtk_widget_destroy),
+        dlg);
+    gtk_widget_show(dlg);
 }
 
 void on_refresh(GtkWidget* w, color_dialog* dl)
@@ -95,6 +108,12 @@ void color_dlg_new(color_dialog** ptr, image_info* img)
     tmp = gtk_button_new_with_label("Cancel");
     gtk_signal_connect_object(GTK_OBJECT(tmp), "clicked",
         GTK_SIGNAL_FUNC(gtk_widget_destroy), GTK_OBJECT(dl->dialog));
+    gtk_box_pack_start(GTK_BOX(GTK_DIALOG(dl->dialog)->action_area), tmp,
+        TRUE, TRUE, 0);
+
+    tmp = gtk_button_new_with_label("Help");
+    gtk_signal_connect_object(GTK_OBJECT(tmp), "clicked",
+        GTK_SIGNAL_FUNC(on_help), dl);
     gtk_box_pack_start(GTK_BOX(GTK_DIALOG(dl->dialog)->action_area), tmp,
         TRUE, TRUE, 0);
 

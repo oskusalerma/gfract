@@ -68,4 +68,6 @@ std::string ops2str(color_ops* ops);
 // and an error string is returned, otherwise an empty string is returned.
 std::string str2ops(const std::string& str, color_ops* ops);
 
+std::string get_cop_help(void);
+
 #endif
