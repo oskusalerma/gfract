@@ -3,3 +3,5 @@ functionality might not be obvious to everyone. The first mouse button
 expands the box, the second button shrinks it, and the third triggers
 the zoom (or both buttons together for those of us with only two mouse 
 buttons).
+
+The coloring algorithm parser uses RPN (Reverse Polish Notation) format.
