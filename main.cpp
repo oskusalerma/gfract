@@ -327,7 +327,7 @@ void init_misc(void)
     img.fr_type = MANDELBROT;
     img.palette_ip = 0;
 
-    img.cops_nr = 7;
+    img.cops_nr = 1;
     img.cops[0].type = ITER;
     img.cops[1].type = REAL2;
     img.cops[2].type = IMAG2;
