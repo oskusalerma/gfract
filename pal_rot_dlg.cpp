@@ -69,14 +69,14 @@ void cycle(palette_rotation_dialog* dl, bool forward)
                              TRUE);
     gtk_widget_set_sensitive(forward ? dl->cycle_f : dl->cycle_b,
                              FALSE);
-    dl->idle_id = gtk_idle_add((GtkFunction)do_palette_rotation,
+    dl->idle_id = g_idle_add((GtkFunction)do_palette_rotation,
                                (gpointer)forward);
 }
 
 void cycle_stop(palette_rotation_dialog* dl)
 {
     if (dl->idle_id != -1)
-        gtk_idle_remove(dl->idle_id);
+        g_source_remove(dl->idle_id);
     gtk_widget_set_sensitive(dl->stop, FALSE);
     gtk_widget_set_sensitive(dl->cycle_f, TRUE);
     gtk_widget_set_sensitive(dl->cycle_b, TRUE);
@@ -116,15 +116,15 @@ void palette_rotation_dlg_new(palette_rotation_dialog** ptr,
     *ptr = dl;
     
     dl->window = gtk_window_new(GTK_WINDOW_TOPLEVEL);
-    gtk_signal_connect(GTK_OBJECT(dl->window), "destroy",
+    g_signal_connect(GTK_OBJECT(dl->window), "destroy",
                        GTK_SIGNAL_FUNC(pal_rot_destroy),
                        dl);
-    gtk_signal_connect(GTK_OBJECT(dl->window), "destroy",
+    g_signal_connect(GTK_OBJECT(dl->window), "destroy",
                        GTK_SIGNAL_FUNC(gtk_widget_destroyed),
                        ptr);
     gtk_window_set_title(GTK_WINDOW(dl->window), "Palette cycling");
-    gtk_window_set_policy(GTK_WINDOW(dl->window), FALSE, FALSE, FALSE);
-    gtk_signal_connect(GTK_OBJECT(dl->window), "key_press_event",
+    gtk_window_set_resizable(GTK_WINDOW(dl->window), FALSE);
+    g_signal_connect(GTK_OBJECT(dl->window), "key_press_event",
                        GTK_SIGNAL_FUNC(key_event), dl);
 
     gtk_container_set_border_width(GTK_CONTAINER(dl->window), 10);
@@ -134,33 +134,33 @@ void palette_rotation_dlg_new(palette_rotation_dialog** ptr,
 
 
     dl->step_b = gtk_button_new_with_label(" < ");
-    gtk_signal_connect(GTK_OBJECT(dl->step_b), "clicked",
+    g_signal_connect(GTK_OBJECT(dl->step_b), "clicked",
                        GTK_SIGNAL_FUNC(step_backward),
                        dl);
     gtk_box_pack_start(GTK_BOX(hbox), dl->step_b, FALSE, FALSE, 0);
     
     dl->cycle_b = gtk_button_new_with_label(" << ");
-    gtk_signal_connect(GTK_OBJECT(dl->cycle_b), "clicked",
+    g_signal_connect(GTK_OBJECT(dl->cycle_b), "clicked",
                        GTK_SIGNAL_FUNC(cycle_backward),
                        dl);
     gtk_box_pack_start(GTK_BOX(hbox), dl->cycle_b, FALSE, FALSE, 0);
 
     
     dl->stop = gtk_button_new_with_label(" Stop ");
-    gtk_signal_connect(GTK_OBJECT(dl->stop), "clicked",
+    g_signal_connect(GTK_OBJECT(dl->stop), "clicked",
                        GTK_SIGNAL_FUNC(stop),
                        dl);
     gtk_box_pack_start(GTK_BOX(hbox), dl->stop, FALSE, FALSE, 4);
     gtk_widget_set_sensitive(dl->stop, FALSE);
 
     dl->cycle_f = gtk_button_new_with_label(" >> ");
-    gtk_signal_connect(GTK_OBJECT(dl->cycle_f), "clicked",
+    g_signal_connect(GTK_OBJECT(dl->cycle_f), "clicked",
                        GTK_SIGNAL_FUNC(cycle_forward),
                        dl);
     gtk_box_pack_start(GTK_BOX(hbox), dl->cycle_f, FALSE, FALSE, 0);
 
     dl->step_f = gtk_button_new_with_label(" > ");
-    gtk_signal_connect(GTK_OBJECT(dl->step_f), "clicked",
+    g_signal_connect(GTK_OBJECT(dl->step_f), "clicked",
                        GTK_SIGNAL_FUNC(step_forward),
                        dl);
     gtk_box_pack_start(GTK_BOX(hbox), dl->step_f, FALSE, FALSE, 0);

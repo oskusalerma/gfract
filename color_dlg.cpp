@@ -84,36 +84,38 @@ void color_dlg_new(color_dialog** ptr, image_info* img)
     
     /* DIALOG AREA */
     dl->dialog = gtk_dialog_new();
-    gtk_signal_connect(GTK_OBJECT(dl->dialog), "destroy",
+    g_signal_connect(GTK_OBJECT(dl->dialog), "destroy",
         GTK_SIGNAL_FUNC(on_destroy), dl);
-    gtk_signal_connect(GTK_OBJECT(dl->dialog), "destroy",
+    g_signal_connect(GTK_OBJECT(dl->dialog), "destroy",
         GTK_SIGNAL_FUNC(gtk_widget_destroyed), ptr);
     gtk_window_set_title(GTK_WINDOW(dl->dialog), "Coloring Settings");
-    gtk_window_set_policy(GTK_WINDOW(dl->dialog), FALSE, FALSE, FALSE);
+    gtk_window_set_resizable(GTK_WINDOW(dl->dialog), FALSE);
     gtk_window_set_position(GTK_WINDOW(dl->dialog), GTK_WIN_POS_MOUSE);
 
     /* BUTTONS */
     dl->ok_button = gtk_button_new_with_label("OK");
-    gtk_signal_connect(GTK_OBJECT(dl->ok_button), "clicked",
+    g_signal_connect(GTK_OBJECT(dl->ok_button), "clicked",
         GTK_SIGNAL_FUNC(on_refresh), dl);
     gtk_box_pack_start(GTK_BOX(GTK_DIALOG(dl->dialog)->action_area),
         dl->ok_button, TRUE, TRUE, 0);
     
     dl->apply_button = gtk_button_new_with_label("Apply");
-    gtk_signal_connect(GTK_OBJECT(dl->apply_button), "clicked",
+    g_signal_connect(GTK_OBJECT(dl->apply_button), "clicked",
         GTK_SIGNAL_FUNC(on_refresh), dl);
     gtk_box_pack_start(GTK_BOX(GTK_DIALOG(dl->dialog)->action_area),
         dl->apply_button, TRUE, TRUE, 0);
     
     tmp = gtk_button_new_with_label("Cancel");
-    gtk_signal_connect_object(GTK_OBJECT(tmp), "clicked",
-        GTK_SIGNAL_FUNC(gtk_widget_destroy), GTK_OBJECT(dl->dialog));
+    g_signal_connect_object(GTK_OBJECT(tmp), "clicked",
+        GTK_SIGNAL_FUNC(gtk_widget_destroy), GTK_OBJECT(dl->dialog),
+                G_CONNECT_SWAPPED);
     gtk_box_pack_start(GTK_BOX(GTK_DIALOG(dl->dialog)->action_area), tmp,
         TRUE, TRUE, 0);
 
     tmp = gtk_button_new_with_label("Help");
-    gtk_signal_connect_object(GTK_OBJECT(tmp), "clicked",
-        GTK_SIGNAL_FUNC(on_help), dl);
+    g_signal_connect_object(GTK_OBJECT(tmp), "clicked",
+        GTK_SIGNAL_FUNC(on_help), GTK_OBJECT(dl->dialog), 
+                G_CONNECT_SWAPPED);
     gtk_box_pack_start(GTK_BOX(GTK_DIALOG(dl->dialog)->action_area), tmp,
         TRUE, TRUE, 0);
 

@@ -18,15 +18,21 @@ void width_update(GtkWidget* w, image_attr_dialog* dl)
 
     if (GTK_TOGGLE_BUTTON(dl->const_ra)->active) {
         height = int(width/dl->ratio);
-        gtk_signal_handler_block_by_data(GTK_OBJECT(dl->height), dl);
+        g_signal_handlers_block_by_func(GTK_OBJECT(dl->height),
+                                    (gpointer)G_CALLBACK(height_update),
+                                    dl);
         gtk_spin_button_set_value(GTK_SPIN_BUTTON(dl->height),
                                   height);
-        gtk_signal_handler_unblock_by_data(GTK_OBJECT(dl->height), dl);
+        g_signal_handlers_unblock_by_func(GTK_OBJECT(dl->height),
+                                    (gpointer)G_CALLBACK(height_update),
+                                    dl);
     }
     
     update_text(GTK_LABEL(dl->text), width,
-                gtk_spin_button_get_value_as_int(GTK_SPIN_BUTTON(dl->height)),
-                gtk_spin_button_get_value_as_int(GTK_SPIN_BUTTON(dl->aa)));
+                gtk_spin_button_get_value_as_int(
+                    GTK_SPIN_BUTTON(dl->height)),
+                gtk_spin_button_get_value_as_int(
+                    GTK_SPIN_BUTTON(dl->aa)));
 }
 
 void height_update(GtkWidget* w, image_attr_dialog* dl)
@@ -39,16 +45,21 @@ void height_update(GtkWidget* w, image_attr_dialog* dl)
 
     if (GTK_TOGGLE_BUTTON(dl->const_ra)->active) {
         width = int(height*dl->ratio);
-        gtk_signal_handler_block_by_data(GTK_OBJECT(dl->width), dl);
+        g_signal_handlers_block_by_func(GTK_OBJECT(dl->width),
+                                    (gpointer)G_CALLBACK(width_update),
+                                    dl);
         gtk_spin_button_set_value(GTK_SPIN_BUTTON(dl->width),
                                   width);
-        gtk_signal_handler_unblock_by_data(GTK_OBJECT(dl->width), dl);
+        g_signal_handlers_unblock_by_func(GTK_OBJECT(dl->width),
+                                    (gpointer)G_CALLBACK(width_update),
+                                    dl);
     }
     
     update_text(GTK_LABEL(dl->text),
-                gtk_spin_button_get_value_as_int(GTK_SPIN_BUTTON(dl->width)),
-                height,
-                gtk_spin_button_get_value_as_int(GTK_SPIN_BUTTON(dl->aa)));
+                gtk_spin_button_get_value_as_int(
+                    GTK_SPIN_BUTTON(dl->width)), height,
+                gtk_spin_button_get_value_as_int(
+                    GTK_SPIN_BUTTON(dl->aa)));
 }
 
 void aa_update(GtkWidget* w, image_attr_dialog* dl)
@@ -59,8 +70,10 @@ void aa_update(GtkWidget* w, image_attr_dialog* dl)
         return;
     
     update_text(GTK_LABEL(dl->text),
-                gtk_spin_button_get_value_as_int(GTK_SPIN_BUTTON(dl->width)),
-                gtk_spin_button_get_value_as_int(GTK_SPIN_BUTTON(dl->height)),
+                gtk_spin_button_get_value_as_int(
+                    GTK_SPIN_BUTTON(dl->width)),
+                gtk_spin_button_get_value_as_int(
+                    GTK_SPIN_BUTTON(dl->height)),
                 aa);
 }
 
@@ -102,30 +115,34 @@ void attr_dlg_new(image_attr_dialog** ptr, image_info* img)
 
     dl->ratio = (double)img->user_width/img->user_height;
     dl->dialog = gtk_dialog_new();
-    gtk_signal_connect(GTK_OBJECT(dl->dialog), "destroy",
+    g_signal_connect(GTK_OBJECT(dl->dialog), "destroy",
                        GTK_SIGNAL_FUNC(image_attr_destroy),
                        dl);
-    gtk_signal_connect(GTK_OBJECT(dl->dialog), "destroy",
+    g_signal_connect(GTK_OBJECT(dl->dialog), "destroy",
                        GTK_SIGNAL_FUNC(gtk_widget_destroyed),
                        ptr);
     gtk_window_set_title(GTK_WINDOW(dl->dialog), "Attributes");
-    gtk_window_set_policy(GTK_WINDOW(dl->dialog), FALSE, FALSE, FALSE);
+    gtk_window_set_resizable(GTK_WINDOW(dl->dialog), FALSE);
     gtk_window_set_position(GTK_WINDOW(dl->dialog), GTK_WIN_POS_MOUSE);
     
     dl->ok_button = gtk_button_new_with_label("OK");
     gtk_box_pack_start(GTK_BOX(GTK_DIALOG(dl->dialog)->action_area),
                        dl->ok_button, TRUE, TRUE, 0);
     gtk_widget_show(dl->ok_button);
-    
+
+    dl->apply_button = gtk_button_new_with_label("Apply");
+    gtk_box_pack_start(GTK_BOX(GTK_DIALOG(dl->dialog)->action_area),
+                       dl->apply_button, TRUE, TRUE, 0);
+    gtk_widget_show(dl->apply_button);
+
     tmp = gtk_button_new_with_label("Cancel");
-    gtk_signal_connect_object(GTK_OBJECT(tmp), "clicked",
+    g_signal_connect_object(GTK_OBJECT(tmp), "clicked",
                               GTK_SIGNAL_FUNC(gtk_widget_destroy),
-                              GTK_OBJECT(dl->dialog));
+                              GTK_OBJECT(dl->dialog), G_CONNECT_SWAPPED);
     gtk_box_pack_start(GTK_BOX(GTK_DIALOG(dl->dialog)->action_area), tmp,
                        TRUE, TRUE, 0);
     gtk_widget_show(tmp);
 
-    
     table = gtk_table_new(8, 2, FALSE);
     gtk_table_set_row_spacings(GTK_TABLE(table), 2);
     gtk_table_set_row_spacing(GTK_TABLE(table), 2, 10);
@@ -146,9 +163,8 @@ void attr_dlg_new(image_attr_dialog** ptr, image_info* img)
     adj = gtk_adjustment_new(img->user_width, 1.0, 999999.0,
                              4.0, 4.0, 0.0);
     tmp = gtk_spin_button_new(GTK_ADJUSTMENT(adj), 0.0, 0);
-    gtk_widget_set_usize(tmp, 55, 0);
     gtk_table_attach_defaults(GTK_TABLE(table), tmp, 1, 2, 0, 1);
-    gtk_signal_connect(GTK_OBJECT(tmp), "changed",
+    g_signal_connect(GTK_OBJECT(tmp), "changed",
                        GTK_SIGNAL_FUNC(width_update),
                        dl);
     gtk_widget_show(tmp);
@@ -162,9 +178,8 @@ void attr_dlg_new(image_attr_dialog** ptr, image_info* img)
     adj = gtk_adjustment_new(img->user_height, 1.0, 999999.0,
                              3.0, 3.0, 0.0);
     tmp = gtk_spin_button_new(GTK_ADJUSTMENT(adj), 0.0, 0);
-    gtk_widget_set_usize(tmp, 55, 0);
     gtk_table_attach_defaults(GTK_TABLE(table), tmp, 1, 2, 1, 2);
-    gtk_signal_connect(GTK_OBJECT(tmp), "changed",
+    g_signal_connect(GTK_OBJECT(tmp), "changed",
                        GTK_SIGNAL_FUNC(height_update),
                        dl);
     gtk_widget_show(tmp);
@@ -178,9 +193,8 @@ void attr_dlg_new(image_attr_dialog** ptr, image_info* img)
 
     adj = gtk_adjustment_new(img->aa_factor, 1.0, 500.0, 1.0, 1.0, 0.0);
     tmp = gtk_spin_button_new(GTK_ADJUSTMENT(adj), 0.0, 0);
-    gtk_widget_set_usize(tmp, 55, 0);
     gtk_table_attach_defaults(GTK_TABLE(table), tmp, 1, 2, 2, 3);
-    gtk_signal_connect(GTK_OBJECT(tmp), "changed",
+    g_signal_connect(GTK_OBJECT(tmp), "changed",
                        GTK_SIGNAL_FUNC(aa_update),
                        dl);
     gtk_widget_show(tmp);
@@ -189,7 +203,7 @@ void attr_dlg_new(image_attr_dialog** ptr, image_info* img)
     tmp = gtk_check_button_new_with_label("Constrain ratio");
     gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(tmp), TRUE);
     gtk_table_attach_defaults(GTK_TABLE(table), tmp, 0, 2, 3, 4);
-    gtk_signal_connect(GTK_OBJECT(tmp), "toggled",
+    g_signal_connect(GTK_OBJECT(tmp), "toggled",
                        GTK_SIGNAL_FUNC(constrain_update),
                        dl);
     gtk_widget_show(tmp);

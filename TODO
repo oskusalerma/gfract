@@ -14,28 +14,9 @@
 
  -probably by templatizing all the calculation functions
 
--add apply button to attr dialog
-
 -optionally store iter/re/im for each calculated pixel, so you can tweak
  coloring without recalculating image (needs 12 bytes per pixel -> lots
  of memory needed for large AA values)
-
--remove all usage of deprecated GTK APIs. most places can be found by
- adding -DGTK_DISABLE_DEPRECATED to compile flags
-
- -gtk_signal_* -> g_signal_*
-
- -gtk_widget_set_usize -> gtk_widget_set_size_request
-
- -from the migration guide:
-
-  "gtk_window_set_policy() is deprecated. To get the effect of
-  "allow_shrink", call gtk_widget_set_size_request (window, 0, 0). To get
-  the effect of "allow_grow", call gtk_window_set_resizable (window,
-  TRUE). You didn't want the effect of "auto_shrink", it made no sense.
-  But maybe if you were using it you want to use gtk_window_resize
-  (window, 1, 1) to snap a window back to its minimum size (the 1, 1 will
-  be rounded up to the minimum window size)."
 
 POSSIBLY IN THE FUTURE:
 

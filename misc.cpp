@@ -94,7 +94,7 @@ void set_image_info(image_info* img, int w, int h, int aa_factor)
     
     if (aa_factor < 1) {
         fprintf(stderr, "aa_factor must be >= 1\n");
-        gtk_exit(1);
+        gtk_main_quit();
     }
 
     img->real_width = w*aa_factor;

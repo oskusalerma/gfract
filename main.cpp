@@ -98,6 +98,7 @@ static void print_version(void);
 
 /* image attribute */
 static void image_attr_ok_cmd(GtkWidget* w, image_attr_dialog* dl);
+static void image_attr_apply_cmd(GtkWidget* w, image_attr_dialog* dl);
 static void do_attr_dialog(void);
 
 /* coloring mode */
@@ -286,18 +287,18 @@ void load_palette_cmd(void)
     gtk_file_selection_hide_fileop_buttons(GTK_FILE_SELECTION(file_sel));
     gtk_file_selection_set_filename(GTK_FILE_SELECTION(file_sel),
                                     palette_get_filename());
-    gtk_signal_connect(GTK_OBJECT(GTK_FILE_SELECTION(file_sel)->ok_button),
+    g_signal_connect(GTK_OBJECT(GTK_FILE_SELECTION(file_sel)->ok_button),
                        "clicked", GTK_SIGNAL_FUNC(palette_ok_cmd),
                        file_sel);
-    gtk_signal_connect_object(GTK_OBJECT
-                              (GTK_FILE_SELECTION(file_sel)->cancel_button),
-                              "clicked", GTK_SIGNAL_FUNC(gtk_widget_destroy),
-                              GTK_OBJECT(file_sel));
+    g_signal_connect_object(
+        GTK_OBJECT(GTK_FILE_SELECTION(file_sel)->cancel_button),
+                       "clicked", GTK_SIGNAL_FUNC(gtk_widget_destroy),
+                       GTK_OBJECT(file_sel), G_CONNECT_SWAPPED);
     
     button = gtk_button_new_with_label("Apply palette");
     gtk_box_pack_start(GTK_BOX(GTK_FILE_SELECTION(file_sel)->action_area),
                        button, FALSE, FALSE, 0);
-    gtk_signal_connect(GTK_OBJECT(button), "clicked",
+    g_signal_connect(GTK_OBJECT(button), "clicked",
                        GTK_SIGNAL_FUNC(palette_apply_cmd), file_sel);
     gtk_widget_show(button);
     
@@ -432,6 +433,12 @@ gint do_palette_rotation(bool forward)
 
 void image_attr_ok_cmd(GtkWidget* w, image_attr_dialog* dl)
 {
+    image_attr_apply_cmd(w, dl);
+    gtk_widget_destroy(dl->dialog);
+}
+
+void image_attr_apply_cmd(GtkWidget* w, image_attr_dialog* dl)
+{
     set_image_info(&img,
            gtk_spin_button_get_value_as_int(GTK_SPIN_BUTTON(dl->width)),
            gtk_spin_button_get_value_as_int(GTK_SPIN_BUTTON(dl->height)),
@@ -440,10 +447,10 @@ void image_attr_ok_cmd(GtkWidget* w, image_attr_dialog* dl)
     if (img.user_width < MIN_WINDOW_WIDTH) {
         /* limit minimum window width to MIN_WINDOW_WIDTH and handle
            this case in the expose event */
-        gtk_drawing_area_size(GTK_DRAWING_AREA(drawing_area),
+        gtk_widget_set_size_request(drawing_area,
                               MIN_WINDOW_WIDTH, img.user_height);
     } else
-        gtk_drawing_area_size(GTK_DRAWING_AREA(drawing_area),
+        gtk_widget_set_size_request(drawing_area,
                               img.user_width, img.user_height);
         
     start_rendering(&img);
@@ -454,8 +461,6 @@ void image_attr_ok_cmd(GtkWidget* w, image_attr_dialog* dl)
         gtk_widget_show(j_pre_window);
         start_rendering(&j_pre);
     }
-    
-    gtk_widget_destroy(dl->dialog);
 }
 
 void main_refresh(void)
@@ -489,7 +494,7 @@ void resize_preview(void)
     }
     
     set_image_info(&j_pre, xw, yw, JPRE_AAFACTOR);
-    gtk_drawing_area_size(GTK_DRAWING_AREA(j_pre.drawing_area), xw, yw);
+    gtk_widget_set_size_request(j_pre.drawing_area, xw, yw);
 }
 
 void do_attr_dialog(void)
@@ -498,9 +503,10 @@ void do_attr_dialog(void)
         return;
 
     attr_dlg_new(&img_attr_dlg, &img);
-    gtk_signal_connect(GTK_OBJECT(img_attr_dlg->ok_button), "clicked",
-                       GTK_SIGNAL_FUNC(image_attr_ok_cmd),
-                       img_attr_dlg);
+    g_signal_connect(GTK_OBJECT(img_attr_dlg->ok_button), "clicked",
+        GTK_SIGNAL_FUNC(image_attr_ok_cmd), img_attr_dlg);
+    g_signal_connect(GTK_OBJECT(img_attr_dlg->apply_button), "clicked",
+        GTK_SIGNAL_FUNC(image_attr_apply_cmd), img_attr_dlg);
 }
 
 void do_color_dialog(void)
@@ -588,13 +594,13 @@ GtkWidget* menu_add(GtkWidget* menu, char* name, void (*func)(void))
 
     if (name != NULL) {
         item = gtk_menu_item_new_with_label(name);
-        gtk_signal_connect_object(GTK_OBJECT(item), "activate",
-                                  GTK_SIGNAL_FUNC(func), NULL);
+        g_signal_connect_object(GTK_OBJECT(item), "activate",
+                        GTK_SIGNAL_FUNC(func), NULL, G_CONNECT_SWAPPED);
     } else
         /* just add a separator line to the menu */
         item = gtk_menu_item_new();
 
-    gtk_menu_append(GTK_MENU(menu), item);
+    gtk_menu_shell_append(GTK_MENU_SHELL(menu), item);
     gtk_widget_show(item);
 
     return item;
@@ -606,7 +612,7 @@ void menu_bar_add(GtkWidget* menubar, GtkWidget* submenu, char* name)
     gtk_widget_show(temp);
 
     gtk_menu_item_set_submenu(GTK_MENU_ITEM(temp), submenu);
-    gtk_menu_bar_append(GTK_MENU_BAR(menubar), temp);
+    gtk_menu_shell_append(GTK_MENU_SHELL(menubar), temp);
 }
 
 void create_menus(GtkWidget* vbox)
@@ -656,7 +662,7 @@ GtkWidget* create_pixmap(GtkWidget* widget, char** xpm_data)
              &(gtk_widget_get_style(widget)->bg[GTK_STATE_NORMAL]),
              (gchar**)xpm_data);
     g_assert(pixmap != NULL);
-    pwid = gtk_pixmap_new(pixmap, mask);
+    pwid = gtk_image_new_from_pixmap(pixmap, mask);
     gtk_widget_show(pwid);
 
     return pwid;
@@ -677,7 +683,7 @@ void start_rendering(image_info* img)
         gtk_label_set_text(GTK_LABEL(recalc_button_label), TEXT_STOP);
         timer_start(&timing_info);
     }
-    img->idle_id = gtk_idle_add((GtkFunction)idle_callback, img);
+    img->idle_id = g_idle_add((GtkFunction)idle_callback, img);
 }
 
 void stop_rendering(image_info* img)
@@ -687,7 +693,7 @@ void stop_rendering(image_info* img)
         if (opts.timing && (img->lines_done == img->real_height))
             printf("Image rendering took %.3f seconds.\n",
                    timer_get_elapsed(&timing_info) / (double)1e6);
-        gtk_idle_remove(img->idle_id);
+        g_source_remove(img->idle_id);
         img->idle_id = -1;
         if (!img->j_pre) {
             gtk_widget_hide(pbar);
@@ -752,7 +758,7 @@ void zoom_in(void)
     double xmin,xmax,ymax;
 
     st.zooming = false;
-    gtk_toggle_button_set_state(GTK_TOGGLE_BUTTON(zoom_in_button),
+    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(zoom_in_button),
                                 FALSE);
 
     ymax = (double)st.z_y;
@@ -858,7 +864,7 @@ gint button_press_event(GtkWidget* widget, GdkEventButton* event)
             if (!zoom_is_valid_size())
                 zoom_resize(-1);
             else
-                zoom_timer = gtk_timeout_add(ZOOM_INTERVAL,
+                zoom_timer = g_timeout_add(ZOOM_INTERVAL,
                                            (GtkFunction)zoom_callback,
                                            (gpointer)2);
         } else if (event->button == 2)
@@ -868,7 +874,7 @@ gint button_press_event(GtkWidget* widget, GdkEventButton* event)
             if (!zoom_is_valid_size())
                 zoom_resize(1);
             else
-                zoom_timer = gtk_timeout_add(ZOOM_INTERVAL,
+                zoom_timer = g_timeout_add(ZOOM_INTERVAL,
                                            (GtkFunction)zoom_callback,
                                            (gpointer)-2);
                 
@@ -902,7 +908,7 @@ gint button_press_event(GtkWidget* widget, GdkEventButton* event)
 void kill_zoom_timers(void)
 {
     if (zoom_timer != -1) {
-        gtk_timeout_remove(zoom_timer);
+        g_source_remove(zoom_timer);
     }
     zoom_timer = -1;
 }
@@ -1029,7 +1035,7 @@ gint idle_callback(image_info* img)
 
 void quit(void)
 {
-  gtk_exit (0);
+  gtk_main_quit();
 }
 
 int main (int argc, char** argv)
@@ -1051,21 +1057,22 @@ int main (int argc, char** argv)
 
     init_misc();
     process_args(argc, argv);
-    gtk_timeout_add(10*1000, child_reaper, NULL);
+    g_timeout_add(10*1000, child_reaper, NULL);
     set_image_info(&img, img.user_width, img.user_height, img.aa_factor);
-    set_image_info(&j_pre, JPRE_SIZE, int(JPRE_SIZE/img.ratio), JPRE_AAFACTOR);
+    set_image_info(&j_pre, JPRE_SIZE, int(JPRE_SIZE/img.ratio),
+        JPRE_AAFACTOR);
     
     /* main window */
     window = gtk_window_new(GTK_WINDOW_TOPLEVEL);
-    gtk_window_set_policy(GTK_WINDOW(window), FALSE, FALSE, TRUE);
+    gtk_window_set_resizable(GTK_WINDOW(window), FALSE);
     gtk_widget_realize(window);
     
     /* preview window */
     j_pre_window = gtk_window_new(GTK_WINDOW_TOPLEVEL);
-    gtk_signal_connect(GTK_OBJECT(j_pre_window), "delete_event",
+    g_signal_connect(GTK_OBJECT(j_pre_window), "delete_event",
                        GTK_SIGNAL_FUNC(j_pre_delete), NULL);
     gtk_window_set_title(GTK_WINDOW(j_pre_window), "Preview");
-    gtk_window_set_policy(GTK_WINDOW(j_pre_window), FALSE, FALSE, TRUE);
+    gtk_window_set_resizable(GTK_WINDOW(j_pre_window), FALSE);
     
     vbox = gtk_vbox_new (FALSE, 0);
     gtk_container_add (GTK_CONTAINER (window), vbox);
@@ -1073,7 +1080,7 @@ int main (int argc, char** argv)
 
     create_menus(vbox);
     
-    gtk_signal_connect (GTK_OBJECT (window), "destroy",
+    g_signal_connect (GTK_OBJECT (window), "destroy",
                         GTK_SIGNAL_FUNC (quit), NULL);
 
     /* toolbar stuff */
@@ -1086,7 +1093,7 @@ int main (int argc, char** argv)
     zoom_in_button = gtk_toggle_button_new();
     gtk_container_add(GTK_CONTAINER(zoom_in_button),
                       create_pixmap(window, zoom_in_xpm));
-    gtk_signal_connect(GTK_OBJECT(zoom_in_button), "toggled",
+    g_signal_connect(GTK_OBJECT(zoom_in_button), "toggled",
                        GTK_SIGNAL_FUNC(zoom_in_func), NULL);
     gtk_box_pack_start(GTK_BOX(hbox), zoom_in_button, FALSE, FALSE,
                        0);
@@ -1099,7 +1106,7 @@ int main (int argc, char** argv)
     zoom_out_button = gtk_button_new();
     gtk_container_add(GTK_CONTAINER(zoom_out_button),
                       create_pixmap(window, zoom_out_xpm));
-    gtk_signal_connect(GTK_OBJECT(zoom_out_button), "clicked",
+    g_signal_connect(GTK_OBJECT(zoom_out_button), "clicked",
                        GTK_SIGNAL_FUNC(zoom_out_func), NULL);
     gtk_box_pack_start(GTK_BOX(hbox), zoom_out_button, FALSE, FALSE,
                        0);
@@ -1116,7 +1123,6 @@ int main (int argc, char** argv)
     /* depth spin-button */
     adj = gtk_adjustment_new(img.depth, 1.0, 2147483647.0, 1, 100, 0.0);
     depth_spin = gtk_spin_button_new(GTK_ADJUSTMENT(adj), 0.0, 0);
-    gtk_widget_set_usize(depth_spin, 70, 0);
     gtk_box_pack_start(GTK_BOX(hbox), depth_spin, FALSE, FALSE, 0);
     gtk_widget_show(depth_spin);
 
@@ -1125,7 +1131,7 @@ int main (int argc, char** argv)
     gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(palette_ip),
         img.palette_ip);
     gtk_box_pack_start(GTK_BOX(hbox), palette_ip, FALSE, FALSE, 0);
-    gtk_signal_connect(GTK_OBJECT(palette_ip), "toggled",
+    g_signal_connect(GTK_OBJECT(palette_ip), "toggled",
         GTK_SIGNAL_FUNC(toggle_palette_ip), NULL);
     gtk_widget_show(palette_ip);
     
@@ -1136,7 +1142,7 @@ int main (int argc, char** argv)
                            0.5, 0.5);
     gtk_container_add(GTK_CONTAINER(button), recalc_button_label);
     gtk_widget_show(recalc_button_label);
-    gtk_signal_connect(GTK_OBJECT(button), "clicked",
+    g_signal_connect(GTK_OBJECT(button), "clicked",
                        GTK_SIGNAL_FUNC(recalc_button), NULL);
     gtk_box_pack_end(GTK_BOX(hbox), button, FALSE, FALSE, 0);
     gtk_widget_show(button);
@@ -1145,7 +1151,6 @@ int main (int argc, char** argv)
     pbar = gtk_progress_bar_new();
     gtk_progress_bar_set_orientation(GTK_PROGRESS_BAR(pbar),
                                      GTK_PROGRESS_LEFT_TO_RIGHT);
-    gtk_widget_set_usize(pbar, 50, 0);
     gtk_box_pack_end(GTK_BOX(hbox), pbar, FALSE, FALSE, 0);
 
     /* separator */
@@ -1159,30 +1164,27 @@ int main (int argc, char** argv)
                            | GDK_BUTTON_RELEASE_MASK
                            | GDK_POINTER_MOTION_MASK
                            | GDK_EXPOSURE_MASK);
-    gtk_drawing_area_size(GTK_DRAWING_AREA(tmp),
-                          img.user_width >= MIN_WINDOW_WIDTH ?
-                          img.user_width : MIN_WINDOW_WIDTH,
-                          img.user_height);
+    gtk_widget_set_size_request(tmp, (img.user_width >= MIN_WINDOW_WIDTH) 
+                ? img.user_width : MIN_WINDOW_WIDTH, img.user_height);
     gtk_box_pack_start(GTK_BOX(vbox), tmp, TRUE, TRUE, 0);
     gtk_widget_show(tmp);
     
-    gtk_signal_connect(GTK_OBJECT(tmp), "button_press_event",
+    g_signal_connect(GTK_OBJECT(tmp), "button_press_event",
                         (GtkSignalFunc)button_press_event, NULL);
-    gtk_signal_connect(GTK_OBJECT(tmp), "button_release_event",
+    g_signal_connect(GTK_OBJECT(tmp), "button_release_event",
                         (GtkSignalFunc)button_release_event, NULL);
-    gtk_signal_connect(GTK_OBJECT(tmp), "expose_event",
+    g_signal_connect(GTK_OBJECT(tmp), "expose_event",
                        GTK_SIGNAL_FUNC(expose_event), &img);
-    gtk_signal_connect(GTK_OBJECT(tmp), "motion_notify_event",
+    g_signal_connect(GTK_OBJECT(tmp), "motion_notify_event",
                        GTK_SIGNAL_FUNC(motion_event), NULL);
     img.drawing_area = drawing_area = tmp;
 
     /* preview window drawing area */
     tmp = gtk_drawing_area_new();
     gtk_widget_set_events (tmp, GDK_EXPOSURE_MASK);
-    gtk_drawing_area_size(GTK_DRAWING_AREA(tmp),
-                           j_pre.user_width, j_pre.user_height);
+    gtk_widget_set_size_request(tmp, j_pre.user_width, j_pre.user_height);
     gtk_container_add(GTK_CONTAINER(j_pre_window), tmp);
-    gtk_signal_connect(GTK_OBJECT(tmp), "expose_event",
+    g_signal_connect(GTK_OBJECT(tmp), "expose_event",
                        GTK_SIGNAL_FUNC(expose_event), &j_pre);
     gtk_widget_show(tmp);
     j_pre.drawing_area = tmp;

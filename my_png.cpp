@@ -160,7 +160,7 @@ void ask_overwrite(image_info* img, char* filename)
     snprintf(buf, 256, "%s exists, overwrite?", filename);
     dl = gtk_dialog_new();
     gtk_window_set_title(GTK_WINDOW(dl), "File exists!");
-    gtk_window_set_policy(GTK_WINDOW(dl), FALSE, FALSE, FALSE);
+    gtk_window_set_resizable(GTK_WINDOW(dl), FALSE);
     gtk_window_set_modal(GTK_WINDOW(dl), TRUE);
     gtk_window_set_position(GTK_WINDOW(dl), GTK_WIN_POS_MOUSE);
 
@@ -177,18 +177,18 @@ void ask_overwrite(image_info* img, char* filename)
     tmp = gtk_button_new_with_label("OK");
     gtk_box_pack_start(GTK_BOX(GTK_DIALOG(dl)->action_area),
                        tmp, TRUE, TRUE, 0);
-    gtk_signal_connect(GTK_OBJECT(tmp), "clicked",
+    g_signal_connect(GTK_OBJECT(tmp), "clicked",
                        GTK_SIGNAL_FUNC(overwrite_ok_cmd),
                        img);
-    gtk_signal_connect_object(GTK_OBJECT(tmp), "clicked",
+    g_signal_connect_object(GTK_OBJECT(tmp), "clicked",
                               GTK_SIGNAL_FUNC(gtk_widget_destroy),
-                              GTK_OBJECT(dl));
+                              GTK_OBJECT(dl), G_CONNECT_SWAPPED);
     gtk_widget_show(tmp);
     
     tmp = gtk_button_new_with_label("Cancel");
-    gtk_signal_connect_object(GTK_OBJECT(tmp), "clicked",
+    g_signal_connect_object(GTK_OBJECT(tmp), "clicked",
                               GTK_SIGNAL_FUNC(gtk_widget_destroy),
-                              GTK_OBJECT(dl));
+                              GTK_OBJECT(dl), G_CONNECT_SWAPPED);
     gtk_box_pack_start(GTK_BOX(GTK_DIALOG(dl)->action_area), tmp,
                        TRUE, TRUE, 0);
     gtk_widget_show(tmp);
@@ -223,14 +223,14 @@ void do_png_save(image_info* img)
     
     filesel = gtk_file_selection_new("Save as PNG");
     gtk_file_selection_hide_fileop_buttons(GTK_FILE_SELECTION(filesel));
-    gtk_signal_connect(GTK_OBJECT(filesel), "destroy",
+    g_signal_connect(GTK_OBJECT(filesel), "destroy",
                        GTK_SIGNAL_FUNC(gtk_widget_destroyed),
                        &filesel);
-    gtk_signal_connect_object(GTK_OBJECT
-                              (GTK_FILE_SELECTION(filesel)->cancel_button),
-                              "clicked", GTK_SIGNAL_FUNC(gtk_widget_destroy),
-                              GTK_OBJECT(filesel));
-    gtk_signal_connect(GTK_OBJECT
+    g_signal_connect_object(
+        GTK_OBJECT(GTK_FILE_SELECTION(filesel)->cancel_button),
+                        "clicked", GTK_SIGNAL_FUNC(gtk_widget_destroy),
+                        GTK_OBJECT(filesel), G_CONNECT_SWAPPED);
+    g_signal_connect(GTK_OBJECT
                        (GTK_FILE_SELECTION(filesel)->ok_button),
                        "clicked", GTK_SIGNAL_FUNC(my_png_ok),
                        img);

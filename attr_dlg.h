@@ -13,7 +13,7 @@ struct image_attr_dialog
     GtkWidget* text;
     GtkWidget* const_ra;
     GtkWidget* ok_button;
-    
+    GtkWidget* apply_button;
     double ratio;
 };
 
