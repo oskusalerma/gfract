@@ -7,7 +7,7 @@
 void fractal_next_line(image_info* img)
 {
     int i;
-    guint32 z;
+    uint32_t z;
     double x,y;
     double c_re, c_im;
     double re,im;

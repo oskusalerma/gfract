@@ -8,13 +8,10 @@ static void do_aa_pixel(image_info* img, int x, int y);
 
 void set_image_info(image_info* img, int w, int h, int aa_factor)
 {
-    gboolean same_size;
+    bool same_size;
 
-    if ((img->user_width == w) && (img->user_height == h)
-         && (img->rgb_data != NULL))
-        same_size = TRUE;
-    else
-        same_size = FALSE;
+    same_size = (img->user_width == w) && (img->user_height == h)
+        && (img->rgb_data != NULL);
 
     if (!same_size)
         delete[] img->rgb_data;
@@ -37,10 +34,10 @@ void set_image_info(image_info* img, int w, int h, int aa_factor)
         img->rgb_data = new uint32_t[img->user_width*img->user_height];
     img->raw_data = new double[img->real_width*img->real_height];
 
-    clear_image(img, TRUE, !same_size);
+    clear_image(img, true, !same_size);
 }
 
-void clear_image(image_info* img, gboolean raw, gboolean rgb)
+void clear_image(image_info* img, bool raw, bool rgb)
 {
     int i;
 
@@ -58,7 +55,7 @@ void do_aa_pixel(image_info* img, int x, int y)
 {
     int yoff,xoff;
     int xi,yi;
-    guint32 r,g,b,c;
+    uint32_t r,g,b,c;
 
     r = g = b = 0;
 
@@ -98,7 +95,7 @@ void do_anti_aliasing(image_info* img, int x0, int y0, int width,
 void rgb_invert(image_info* img)
 {
     int x,y;
-    guint32 c,r,g,b;
+    uint32_t c,r,g,b;
 
     for (y=0; y < img->user_height; y++) {
         for (x=0; x < img->user_width; x++) {

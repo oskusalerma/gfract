@@ -11,14 +11,14 @@
 /* keep the current palette's filename around */
 static char _filename[BUF_SIZE];
 
-gboolean palette_load(char* filename)
+bool palette_load(char* filename)
 {
     int r,g,b;
     char buf[BUF_SIZE];
     
     FILE* fp = fopen(filename, "r");
     if (fp == NULL)
-        return FALSE;
+        return false;
 
     palette.clear();
     
@@ -34,14 +34,14 @@ gboolean palette_load(char* filename)
     {
         palette.push_back(RGB(0, 0, 0));
         
-        return FALSE;
+        return false;
     }
 
     palette_size = palette.size();
     strncpy(_filename, filename, BUF_SIZE);
     _filename[BUF_SIZE-1] = '\0';
 
-    return TRUE;
+    return true;
 }
 
 char* palette_get_filename(void)
@@ -63,7 +63,7 @@ void palette_apply(image_info* img, int x0, int y0, int width, int height)
 void palette_invert(void)
 {
     int i;
-    guint32 r,g,b;
+    uint32_t r,g,b;
     
     for (i=0; i < (int)palette_size; i++) {
         r = 255-RED(palette[i]);
@@ -76,7 +76,7 @@ void palette_invert(void)
 void palette_rotate_backward(void)
 {
     int i, max;
-    guint32 temp;
+    uint32_t temp;
     
     max = palette_size-1;
     temp = palette[0];
@@ -88,7 +88,7 @@ void palette_rotate_backward(void)
 void palette_rotate_forward(void)
 {
     int i, max;
-    guint32 temp;
+    uint32_t temp;
 
     max = palette_size-1;
     temp = palette[max];
@@ -114,8 +114,8 @@ uint32_t get_pixel(image_info* img, int x, int y)
         diff = cval - val;
         rdiff = 1.0 - diff;
     
-        ind1 = ((guint32)floor(val)) % palette_size;
-        ind2 = (guint32)cval % palette_size;
+        ind1 = ((uint32_t)floor(val)) % palette_size;
+        ind2 = (uint32_t)cval % palette_size;
     
         c1 = palette[ind1];
         c2 = palette[ind2];
@@ -132,7 +132,7 @@ uint32_t get_pixel(image_info* img, int x, int y)
         int index;
     
         c = img->raw_data[y*img->real_width + x];
-        index = (guint32)c % palette_size;
+        index = (uint32_t)c % palette_size;
 
         return palette[index];
     }

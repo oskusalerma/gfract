@@ -3,7 +3,8 @@
 
 #include "fractal_types.h"
 
-typedef struct {
+struct image_attr_dialog
+{
     GtkWidget* dialog;
 
     GtkWidget* width;
@@ -14,7 +15,7 @@ typedef struct {
     GtkWidget* ok_button;
     
     double ratio;
-} image_attr_dialog;
+};
 
 void attr_dlg_new(image_attr_dialog** ptr, image_info* img);
 

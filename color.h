@@ -4,14 +4,15 @@
 /** maximum number of operations */
 #define MAX_OPS 256
 
-typedef struct
+struct point_info
 {
     double x, y;
     double re,im,re2,im2;
     unsigned int iter;
-} point_info;
+};
 
-typedef enum {
+enum op_type
+{
     ITER,
     REAL,
     REAL2,
@@ -33,12 +34,13 @@ typedef enum {
     SIN,
     COS,
     TAN
-} op_type;
+};
 
-typedef struct {
+struct color_op
+{
     op_type type;
     double value;
-} color_op;
+};
 
 double calculate_color(color_op* cops, int cops_nr, point_info* pi);
 

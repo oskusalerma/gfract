@@ -15,7 +15,7 @@
 
 static GtkWidget* filesel = NULL;
 
-static gboolean file_exists(char* filename);
+static bool file_exists(char* filename);
 static void ask_overwrite(image_info* img, char* filename);
 static void save_file(image_info* img, char* filename);
 static void overwrite_ok_cmd(GtkWidget* w, image_info* img);
@@ -25,16 +25,13 @@ void save_file(image_info* img, char* filename)
     FILE* fp;
     png_struct* png_ptr;
     png_info* info_ptr;
-    gboolean pal;                /* TRUE if img is palettized */
+    bool pal;                /* true if img is palettized */
     int i;
     png_color* png_pal = NULL;
-    guchar* pal_data = NULL;
-    guchar** row_p = NULL;
+    uint8_t* pal_data = NULL;
+    uint8_t** row_p = NULL;
     
-    if ((img->aa_factor == 1) && !img->palette_ip)
-        pal = TRUE;
-    else
-        pal = FALSE;
+    pal = (img->aa_factor == 1) && !img->palette_ip;
     
     fp = fopen(filename, "w");
     if (fp == NULL) {
@@ -104,7 +101,7 @@ void save_file(image_info* img, char* filename)
         /* convert data to palette index format */
         
         int pixels = img->user_width * img->user_height;
-        guchar* dst;
+        uint8_t* dst;
         double* src;
 
         pal_data = new uint8_t[pixels];
@@ -112,7 +109,7 @@ void save_file(image_info* img, char* filename)
         src = img->raw_data;
 
         for (i=0; i < pixels; i++) {
-            *dst = (guint32)(*src) % palette_size;
+            *dst = (uint32_t)(*src) % palette_size;
 
             src++;
             dst++;
@@ -141,16 +138,16 @@ void save_file(image_info* img, char* filename)
     fclose(fp);
 }
 
-gboolean file_exists(char* filename)
+bool file_exists(char* filename)
 {
     FILE* fp = fopen(filename, "r");
 
     if (fp == NULL)
-        return FALSE;
+        return false;
 
     fclose(fp);
 
-    return TRUE;
+    return true;
 }
 
 void ask_overwrite(image_info* img, char* filename)

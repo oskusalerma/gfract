@@ -1,19 +1,23 @@
 #ifndef __FRACTAL_TYPES_H
 #define __FRACTAL_TYPES_H
 
+#include <stdint.h>
 #include <gtk/gtk.h>
 #include "color.h"
 
-typedef struct {
+struct julia_info
+{
     double c_re;
     double c_im;
-} julia_info;
+};
 
-typedef enum {
+enum fractal_type
+{
     MANDELBROT, JULIA
-} fractal_type;
+};
 
-typedef struct {
+struct image_info
+{
     /* coordinates */
     double xmin,xmax,ymax;
     
@@ -32,10 +36,10 @@ typedef struct {
 
     /* actual data pointers */
     double* raw_data;
-    guint32* rgb_data;
+    uint32_t* rgb_data;
 
-    /* TRUE if we're a julia preview */
-    gboolean j_pre;
+    /* true if we're a julia preview */
+    bool j_pre;
     
     /* it's handy to keep this around */
     GtkWidget* drawing_area;
@@ -57,8 +61,8 @@ typedef struct {
     /* fractal type */
     fractal_type fr_type;
 
-    /* 1 if palette interpolation should be used. */
-    int palette_ip;
+    /* true if palette interpolation should be used. */
+    bool palette_ip;
     
     /* different fractal types' parameters */
     union {
@@ -69,8 +73,8 @@ typedef struct {
     int cops_nr;
     color_op cops[MAX_OPS];
     
-} image_info;
+};
 
 void fractal_next_line(image_info* img);
 
-#endif /* __FRACTAL_TYPES_H */
+#endif

@@ -3,7 +3,8 @@
 
 #include "fractal_types.h"
 
-typedef struct {
+struct palette_rotation_dialog
+{
     GtkWidget* window;
 
     GtkWidget* cycle_f;
@@ -14,8 +15,8 @@ typedef struct {
     
     image_info* img;
     int idle_id;
-} palette_rotation_dialog;
+};
 
 void palette_rotation_dlg_new(palette_rotation_dialog** ptr, image_info* img);
 
-#endif /* __PAL_ROT_DLG_H */
+#endif

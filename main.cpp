@@ -53,7 +53,8 @@
 #define MIN(x,y) ((x) < (y) ? (x) : (y))
 #define MAX(x,y) ((x) > (y) ? (x) : (y))
 
-typedef struct {
+struct status_info
+{
     int zooming;
     int julia_browsing;
 
@@ -62,13 +63,14 @@ typedef struct {
     int z_y;
     int z_width;
     int z_height;
-} status_info;
+};
 
 /* options */
-typedef struct {
+struct options
+{
     /* display amount of time needed for rendering */
     int timing;
-} options;
+};
 
 static gint idle_callback(image_info* img);
 static void start_rendering(image_info* img);
@@ -266,7 +268,7 @@ void reapply_palette(void)
 
 void palette_apply_cmd(GtkWidget* w, GtkFileSelection* fs)
 {
-    if (palette_load((char*)gtk_file_selection_get_filename(fs)) == FALSE) {
+    if (palette_load((char*)gtk_file_selection_get_filename(fs)) == false) {
         fprintf(stderr, "Invalid palette file %s\n",
                 gtk_file_selection_get_filename(fs));
     } else {
@@ -323,12 +325,19 @@ void init_misc(void)
     img.ymax = 1.2;
 
     img.idle_id = -1;
-    img.j_pre = FALSE;
+    img.j_pre = false;
     img.fr_type = MANDELBROT;
-    img.palette_ip = 0;
+    img.palette_ip = true;
 
-    img.cops_nr = 1;
+    img.cops_nr = 7;
     img.cops[0].type = ITER;
+    img.cops[1].type = REAL2;
+    img.cops[2].type = IMAG2;
+    img.cops[3].type = PLUS;
+    img.cops[4].type = NUMBER_VALUE;
+    img.cops[5].value = 4.0;
+    img.cops[5].type = MINUS;
+    img.cops[6].type = PLUS;
 
     /* init preview */
     j_pre.depth = 300;
@@ -343,16 +352,16 @@ void init_misc(void)
     j_pre.u.julia.c_im = 0.6;
     
     j_pre.idle_id = -1;
-    j_pre.j_pre = TRUE;
+    j_pre.j_pre = true;
     j_pre.fr_type = JULIA;
-    img.palette_ip = 0;
+    j_pre.palette_ip = false;
 
     j_pre.cops_nr = 1;
     j_pre.cops[0].type = ITER;
     
     /* misc init */
-    st.zooming = FALSE;
-    st.julia_browsing = FALSE;
+    st.zooming = false;
+    st.julia_browsing = false;
     zoom_timer = -1;
 
     /* default values for options */
@@ -396,11 +405,11 @@ void redraw_image(image_info* img)
                           img->drawing_area->style->white_gc,
                           0, 0, img->user_width, img->user_height,
                           GDK_RGB_DITHER_NONE,
-                          (guchar*)img->rgb_data,
+                          (uint8_t*)img->rgb_data,
                           img->user_width*4);
 }
 
-gint do_palette_rotation(gboolean forward)
+gint do_palette_rotation(bool forward)
 {
     if (forward)
         palette_rotate_forward();
@@ -640,7 +649,7 @@ void start_rendering(image_info* img)
             gtk_spin_button_get_value_as_int(GTK_SPIN_BUTTON(depth_spin));
         
         gtk_progress_configure(GTK_PROGRESS(pbar), 0.0, 0.0,
-                               (gfloat)img->real_height);
+                               (double)img->real_height);
         gtk_widget_show(pbar);
         gtk_label_set_text(GTK_LABEL(recalc_button_label), TEXT_STOP);
         timer_start(&timing_info);
@@ -666,7 +675,7 @@ void stop_rendering(image_info* img)
 
 void start_julia_browsing(void)
 {
-    st.julia_browsing = TRUE;
+    st.julia_browsing = true;
     gtk_widget_show(j_pre_window);
     gtk_widget_set_sensitive(switch_menu_cmd, FALSE);
 }
@@ -674,12 +683,12 @@ void start_julia_browsing(void)
 void stop_julia_browsing(void)
 {
     stop_rendering(&j_pre);
-    st.julia_browsing = FALSE;
+    st.julia_browsing = false;
     gtk_widget_hide(j_pre_window);
     gtk_widget_set_sensitive(switch_menu_cmd, TRUE);
 }
 
-gint j_pre_delete(GtkWidget *widget, GdkEvent *event, gpointer data)
+gint j_pre_delete(GtkWidget* widget, GdkEvent* event, gpointer data)
 {
     stop_julia_browsing();
     
@@ -703,14 +712,14 @@ void start_zooming(void)
     st.z_y = 0;
     st.z_width = int(ZOOM_BOX_WIDTH * img.user_width);
     st.z_height = int(st.z_width/img.ratio);
-    st.zooming = TRUE;
+    st.zooming = true;
     
     draw_zoom_box();
 }
 
 void stop_zooming(void)
 {
-    st.zooming = FALSE;
+    st.zooming = false;
     draw_zoom_box();
     kill_zoom_timers();
 }
@@ -719,7 +728,7 @@ void zoom_in(void)
 {
     double xmin,xmax,ymax;
 
-    st.zooming = FALSE;
+    st.zooming = false;
     gtk_toggle_button_set_state(GTK_TOGGLE_BUTTON(zoom_in_button),
                                 FALSE);
 
@@ -748,9 +757,9 @@ int zoom_is_valid_size(void)
     if ( (st.z_width < 4) || (st.z_width > (img.user_width-16))
          || (st.z_height < 4) || (st.z_height > (img.user_height-16))
          )
-        return FALSE;
+        return false;
     else
-        return TRUE;
+        return true;
 }
 
 gint zoom_callback(int arg)
@@ -930,14 +939,13 @@ gint expose_event(GtkWidget* widget, GdkEventExpose* event,
 
     if (pic_area.width != 0) {
         gdk_draw_rgb_32_image(widget->window,
-                              widget->style->white_gc,
-                              pic_area.x, pic_area.y,
-                              pic_area.width, pic_area.height,
-                              GDK_RGB_DITHER_NONE,
-                              (guchar*)&(img->rgb_data[pic_area.y*
-                                                      img->user_width
-                                                      + pic_area.x]),
-                              img->user_width*4);
+            widget->style->white_gc,
+            pic_area.x, pic_area.y,
+            pic_area.width, pic_area.height,
+            GDK_RGB_DITHER_NONE,
+            (uint8_t*)&(img->rgb_data[pic_area.y * img->user_width +
+                    pic_area.x]),
+            img->user_width * 4);
     }
 
     if (padding_area.width != 0) {
@@ -969,15 +977,14 @@ gint idle_callback(image_info* img)
 
     y_offset = img->lines_done/img->aa_factor-1;
     gdk_draw_rgb_32_image(img->drawing_area->window,
-                          img->drawing_area->style->white_gc,
-                          0, y_offset, img->user_width, 1,
-                          GDK_RGB_DITHER_NONE,
-                          (guchar*)
-                          (&(img->rgb_data[img->user_width*y_offset])),
-                          img->user_width*4);
+        img->drawing_area->style->white_gc,
+        0, y_offset, img->user_width, 1,
+        GDK_RGB_DITHER_NONE,
+        (uint8_t*)(&(img->rgb_data[img->user_width * y_offset])),
+        img->user_width * 4);
 
     if (!img->j_pre)
-        gtk_progress_set_value(GTK_PROGRESS(pbar), (gfloat)img->lines_done);
+        gtk_progress_set_value(GTK_PROGRESS(pbar), (double)img->lines_done);
     
     if (img->lines_done == img->real_height) {
         stop_rendering(img);
@@ -1006,7 +1013,7 @@ int main (int argc, char** argv)
 
     gdk_rgb_init();
     
-    if (palette_load(DEFAULT_PALETTE_FILE) == FALSE) {
+    if (!palette_load(DEFAULT_PALETTE_FILE)) {
         fprintf(stderr, "Can't load palette file %s\n",
                 DEFAULT_PALETTE_FILE);
         exit(1);
@@ -1109,7 +1116,7 @@ int main (int argc, char** argv)
     gtk_progress_bar_set_orientation(GTK_PROGRESS_BAR(pbar),
                                      GTK_PROGRESS_LEFT_TO_RIGHT);
     gtk_progress_configure(GTK_PROGRESS(pbar), 0.0, 0.0,
-                           (gfloat)img.real_height);
+                           (double)img.real_height);
     gtk_widget_set_usize(pbar, 50, 0);
     gtk_box_pack_end(GTK_BOX(hbox), pbar, FALSE, FALSE, 0);
 

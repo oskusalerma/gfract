@@ -12,7 +12,7 @@ static void step_forward(GtkWidget* widget,
                          palette_rotation_dialog* dl);
 static void step_backward(GtkWidget* widget,
                           palette_rotation_dialog* dl);
-static void cycle(palette_rotation_dialog* dl, gboolean forward);
+static void cycle(palette_rotation_dialog* dl, bool forward);
 static void cycle_stop(palette_rotation_dialog* dl);
 static void stop(GtkWidget* widget, palette_rotation_dialog* dl);
 static gint key_event(GtkWidget* widget, GdkEventKey* event,
@@ -32,11 +32,11 @@ gint key_event(GtkWidget* widget, GdkEventKey* event,
         break;
     case GDK_f:
     case GDK_F:
-        cycle(dl, TRUE);
+        cycle(dl, true);
         break;
     case GDK_b:
     case GDK_B:
-        cycle(dl, FALSE);
+        cycle(dl, false);
         break;
     case GDK_s:
     case GDK_S:
@@ -50,17 +50,17 @@ gint key_event(GtkWidget* widget, GdkEventKey* event,
 void cycle_forward(GtkWidget* widget,
                    palette_rotation_dialog* dl)
 {
-    cycle(dl, TRUE);
+    cycle(dl, true);
 }
 
 void cycle_backward(GtkWidget* widget,
                     palette_rotation_dialog* dl)
 {
-    cycle(dl, FALSE);
+    cycle(dl, false);
     
 }
 
-void cycle(palette_rotation_dialog* dl, gboolean forward)
+void cycle(palette_rotation_dialog* dl, bool forward)
 {
     cycle_stop(dl);
 
