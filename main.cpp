@@ -329,13 +329,6 @@ void init_misc(void)
 
     img.cops_nr = 1;
     img.cops[0].type = ITER;
-    img.cops[1].type = REAL2;
-    img.cops[2].type = IMAG2;
-    img.cops[3].type = PLUS;
-    img.cops[4].type = NUMBER_VALUE;
-    img.cops[4].value = 4.0;
-    img.cops[5].type = MINUS;
-    img.cops[6].type = PLUS;
 
     /* init preview */
     j_pre.depth = 300;
@@ -355,7 +348,7 @@ void init_misc(void)
     img.palette_ip = 0;
 
     j_pre.cops_nr = 1;
-    j_pre.cops->type = ITER;
+    j_pre.cops[0].type = ITER;
     
     /* misc init */
     st.zooming = FALSE;
