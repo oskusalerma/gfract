@@ -114,8 +114,12 @@ static void palette_ok_cmd(GtkWidget* w, GtkFileSelection* fs);
 /* palette cycling */
 static void do_pal_rot_dialog(void);
 
-/* palette saving */
+/* image saving */
 static void save_cmd(void);
+
+/* reset fractal position */
+static void reset_fractal_cmd(void);
+static void reset_fractal(void);
 
 
 /* general stuff we need to have */
@@ -239,6 +243,19 @@ void save_cmd(void)
     do_png_save(&img);
 }
 
+void reset_fractal_cmd(void)
+{
+    reset_fractal();
+    start_rendering(&img);
+}
+
+void reset_fractal(void)
+{
+    img.xmin = -2.21;
+    img.xmax = 1.0;
+    img.ymax = 1.2;
+}
+
 void switch_fractal_type(void)
 {
     if (img.fr_type == MANDELBROT) {
@@ -317,9 +334,7 @@ void init_misc(void)
     img.rgb_data = NULL;
     img.raw_data = NULL;
 
-    img.xmin = -2.21;
-    img.xmax = 1.0;
-    img.ymax = 1.2;
+    reset_fractal();
 
     img.idle_id = -1;
     img.j_pre = false;
@@ -626,6 +641,8 @@ void create_menus(GtkWidget* vbox)
     gtk_widget_show(menu_bar);
 
     menu = gtk_menu_new();
+    menu_add(menu, "Reset fractal", reset_fractal_cmd);
+    menu_add(menu, NULL, NULL);
     menu_add(menu, "Save as PNG", save_cmd);
     menu_add(menu, NULL, NULL);
     menu_add(menu, "Duplicate", duplicate);

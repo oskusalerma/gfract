@@ -1,5 +1,9 @@
 This file documents the keyboard shortcuts available.
 
+Main window:
+
+ Enter: Zooms in (while zooming)
+
 Palette cycling window:
  s   : stop
  f,b : cycle forward/backward
