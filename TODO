@@ -17,7 +17,14 @@ amounts of memory needed)
 
 -use long double? (~30% slower)
 
--apply nappi attr dialogiin
+-add apply button to attr dialog
+
+MEDIUM TERM:
+
+-convert all uses of deprecated GDK/GTK APIs
+
+ -they can be found by adding -D[GDK|GTK]_DISABLE_DEPRECATED to compile
+ flags
 
 POSSIBLY IN THE FUTURE:
 

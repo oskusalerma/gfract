@@ -663,8 +663,7 @@ void start_rendering(image_info* img)
         img->depth =
             gtk_spin_button_get_value_as_int(GTK_SPIN_BUTTON(depth_spin));
         
-        gtk_progress_configure(GTK_PROGRESS(pbar), 0.0, 0.0,
-                               (double)img->real_height);
+        gtk_progress_bar_set_fraction(GTK_PROGRESS_BAR(pbar), 0.0);
         gtk_widget_show(pbar);
         gtk_label_set_text(GTK_LABEL(recalc_button_label), TEXT_STOP);
         timer_start(&timing_info);
@@ -999,7 +998,10 @@ gint idle_callback(image_info* img)
         img->user_width * 4);
 
     if (!img->j_pre)
-        gtk_progress_set_value(GTK_PROGRESS(pbar), (double)img->lines_done);
+    {
+        gtk_progress_bar_set_fraction(GTK_PROGRESS_BAR(pbar),
+            (float)img->lines_done / img->real_height);
+    }
     
     if (img->lines_done == img->real_height) {
         stop_rendering(img);
@@ -1130,8 +1132,6 @@ int main (int argc, char** argv)
     pbar = gtk_progress_bar_new();
     gtk_progress_bar_set_orientation(GTK_PROGRESS_BAR(pbar),
                                      GTK_PROGRESS_LEFT_TO_RIGHT);
-    gtk_progress_configure(GTK_PROGRESS(pbar), 0.0, 0.0,
-                           (double)img.real_height);
     gtk_widget_set_usize(pbar, 50, 0);
     gtk_box_pack_end(GTK_BOX(hbox), pbar, FALSE, FALSE, 0);
 
