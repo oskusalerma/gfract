@@ -1,5 +1,4 @@
-#include <gtk/gtk.h>
+#include "externs.h"
 
-guint32* palette = NULL;
-int pal_indexes = 256;
-
+std::vector<uint32_t> palette;
+unsigned int palette_size = 0;

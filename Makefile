@@ -1,27 +1,27 @@
 PROG := gfract
 
-CC := gcc
+CC := g++
 
 DEFS := -Wall -ansi -pedantic -D_GNU_SOURCE
 DEFS := $(shell pkg-config --cflags gtk+-2.0) $(DEFS)
 
-CFLAGS := $(DEFS) -O2
-#CFLAGS := $(DEFS) -Og
+CXXFLAGS := $(DEFS) -O2
+#CXXFLAGS := $(DEFS) -g
 
 LDFLAGS := -lpng -lz
 LDFLAGS := $(shell pkg-config --libs gtk+-2.0) $(LDFLAGS)
 
-SRC := $(wildcard *.c)
-OBJS := $(patsubst %.c, %.o, $(SRC))
+SRC := $(wildcard *.cpp)
+OBJS := $(patsubst %.cpp, %.o, $(SRC))
 HEADERS := $(wildcard *.h *.xpm)
 
 $(PROG): $(OBJS)
 	@echo Linking $(PROG)
-	@$(CC) $(CFLAGS) $(OBJS) $(LDFLAGS) -o $(PROG)
+	@$(CC) $(CXXFLAGS) $(OBJS) $(LDFLAGS) -o $(PROG)
 
-%.o: %.c $(HEADERS)
+%.o: %.cpp $(HEADERS)
 	@echo Compiling $<
-	@$(CC) $(CFLAGS) -c $< -o $@
+	@$(CC) $(CXXFLAGS) -c $< -o $@
 
 clean:
 	rm -f $(PROG) $(OBJS)

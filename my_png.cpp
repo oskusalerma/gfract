@@ -1,6 +1,7 @@
+#include <errno.h>
+#include <stdint.h>
 #include <stdio.h>
 #include <string.h>
-#include <errno.h>
 #include <png.h>
 #include <gtk/gtk.h>
 #include "externs.h"
@@ -86,13 +87,13 @@ void save_file(image_info* img, char* filename)
 
     /* write palette */
     if (pal) {
-        png_pal = g_malloc(sizeof(png_color)*pal_indexes);
-        for (i=0; i < pal_indexes; i++) {
+        png_pal = new png_color[palette_size];
+        for (i=0; i < (int)palette_size; i++) {
             png_pal[i].red = RED(palette[i]);
             png_pal[i].green = GREEN(palette[i]);
             png_pal[i].blue = BLUE(palette[i]);
         }
-        png_set_PLTE(png_ptr, info_ptr, png_pal, pal_indexes);
+        png_set_PLTE(png_ptr, info_ptr, png_pal, palette_size);
     }
 
     png_write_info(png_ptr, info_ptr);
@@ -106,12 +107,12 @@ void save_file(image_info* img, char* filename)
         guchar* dst;
         double* src;
 
-        pal_data = g_malloc(pixels);
+        pal_data = new uint8_t[pixels];
         dst = pal_data;
         src = img->raw_data;
 
         for (i=0; i < pixels; i++) {
-            *dst = (guint32)(*src) % pal_indexes;
+            *dst = (guint32)(*src) % palette_size;
 
             src++;
             dst++;
@@ -119,12 +120,12 @@ void save_file(image_info* img, char* filename)
     }
 
     /* initialize row pointers */
-    row_p = g_malloc(sizeof(guchar*) * img->user_height);
+    row_p = new uint8_t*[img->user_height];
     for (i=0; i < img->user_height; i++) {
         if (pal)
             row_p[i] = &(pal_data[i * img->user_width]);
         else
-            row_p[i] = (guchar*)&(img->rgb_data[i * img->user_width]);
+            row_p[i] = (uint8_t*)&(img->rgb_data[i * img->user_width]);
     }
     
     /* write image */

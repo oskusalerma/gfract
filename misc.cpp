@@ -34,9 +34,8 @@ void set_image_info(image_info* img, int w, int h, int aa_factor)
     img->real_height = h*aa_factor;
 
     if (!same_size)
-        img->rgb_data = g_malloc(img->user_width*img->user_height*4);
-    img->raw_data = g_malloc(img->real_width*img->real_height *
-        sizeof(*img->raw_data));
+        img->rgb_data = new uint32_t[img->user_width*img->user_height];
+    img->raw_data = new double[img->real_width*img->real_height];
 
     clear_image(img, TRUE, !same_size);
 }

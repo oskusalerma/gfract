@@ -17,7 +17,7 @@ void width_update(GtkWidget* w, image_attr_dialog* dl)
         return;
 
     if (GTK_TOGGLE_BUTTON(dl->const_ra)->active) {
-        height = width/dl->ratio;
+        height = int(width/dl->ratio);
         gtk_signal_handler_block_by_data(GTK_OBJECT(dl->height), dl);
         gtk_spin_button_set_value(GTK_SPIN_BUTTON(dl->height),
                                   height);
@@ -38,7 +38,7 @@ void height_update(GtkWidget* w, image_attr_dialog* dl)
         return;
 
     if (GTK_TOGGLE_BUTTON(dl->const_ra)->active) {
-        width = height*dl->ratio;
+        width = int(height*dl->ratio);
         gtk_signal_handler_block_by_data(GTK_OBJECT(dl->width), dl);
         gtk_spin_button_set_value(GTK_SPIN_BUTTON(dl->width),
                                   width);
@@ -78,7 +78,7 @@ void update_text(GtkLabel* label, int w, int h, int aa)
     char buf[256];
     double megs;
 
-    megs = (w*h*4.0*aa*aa + w*h*4.0)/(1024.0*1024.0);
+    megs = (w*h*sizeof(double)*aa*aa + w*h*4.0)/(1024.0*1024.0);
     snprintf(buf, 256, "Memory required: %.2f M", megs);
     gtk_label_set_text(label, buf);
 }
@@ -86,7 +86,7 @@ void update_text(GtkLabel* label, int w, int h, int aa)
 static void image_attr_destroy(GtkWidget* widget,
                                image_attr_dialog* dl)
 {
-    g_free(dl);
+    delete dl;
 }
 
 void attr_dlg_new(image_attr_dialog** ptr, image_info* img)
@@ -97,7 +97,7 @@ void attr_dlg_new(image_attr_dialog** ptr, image_info* img)
     GtkObject* adj;
     image_attr_dialog* dl;
 
-    dl = g_malloc(sizeof(image_attr_dialog));
+    dl = new image_attr_dialog;
     *ptr = dl;
 
     dl->ratio = (double)img->user_width/img->user_height;
@@ -145,7 +145,7 @@ void attr_dlg_new(image_attr_dialog** ptr, image_info* img)
 
     adj = gtk_adjustment_new(img->user_width, 1.0, 999999.0,
                              4.0, 4.0, 0.0);
-    tmp = gtk_spin_button_new(GTK_ADJUSTMENT(adj), 0.0, 0.0);
+    tmp = gtk_spin_button_new(GTK_ADJUSTMENT(adj), 0.0, 0);
     gtk_widget_set_usize(tmp, 55, 0);
     gtk_table_attach_defaults(GTK_TABLE(table), tmp, 1, 2, 0, 1);
     gtk_signal_connect(GTK_OBJECT(tmp), "changed",
@@ -161,7 +161,7 @@ void attr_dlg_new(image_attr_dialog** ptr, image_info* img)
 
     adj = gtk_adjustment_new(img->user_height, 1.0, 999999.0,
                              3.0, 3.0, 0.0);
-    tmp = gtk_spin_button_new(GTK_ADJUSTMENT(adj), 0.0, 0.0);
+    tmp = gtk_spin_button_new(GTK_ADJUSTMENT(adj), 0.0, 0);
     gtk_widget_set_usize(tmp, 55, 0);
     gtk_table_attach_defaults(GTK_TABLE(table), tmp, 1, 2, 1, 2);
     gtk_signal_connect(GTK_OBJECT(tmp), "changed",
@@ -177,7 +177,7 @@ void attr_dlg_new(image_attr_dialog** ptr, image_info* img)
     gtk_widget_show(tmp);
 
     adj = gtk_adjustment_new(img->aa_factor, 1.0, 500.0, 1.0, 1.0, 0.0);
-    tmp = gtk_spin_button_new(GTK_ADJUSTMENT(adj), 0.0, 0.0);
+    tmp = gtk_spin_button_new(GTK_ADJUSTMENT(adj), 0.0, 0);
     gtk_widget_set_usize(tmp, 55, 0);
     gtk_table_attach_defaults(GTK_TABLE(table), tmp, 1, 2, 2, 3);
     gtk_signal_connect(GTK_OBJECT(tmp), "changed",

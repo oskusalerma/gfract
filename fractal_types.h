@@ -22,7 +22,7 @@ typedef struct {
     double old_xmin, old_xmax, old_ymax;
     
     /* recursion depth */
-    int depth;
+    unsigned int depth;
 
     /* lines done */
     int lines_done;

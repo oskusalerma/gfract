@@ -17,9 +17,9 @@ amounts of memory needed)
 
 -use long double?
 
--support palettes of more than 256 entries
+-good coloring formulas:
 
--convert to C++
+ iter real2 imag2 + 4.0 - +
 
 POSSIBLY IN THE FUTURE:
 

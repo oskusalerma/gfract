@@ -48,7 +48,7 @@ double calculate_color(color_op* cops, int cops_nr, point_info* pi)
         case NUMBER_VALUE:
             OP0(cop->value);
         case PALETTE_COUNT:
-            OP0((double)pal_indexes);
+            OP0((double)palette_size);
             
         case PLUS:
             OP2(+);

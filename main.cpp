@@ -202,7 +202,9 @@ void process_args(int argc, char** argv)
                     exit(1);
                 }
                 my_fread(&img, sizeof(image_info), fp);
-                my_fread(palette, 256*4, fp);
+                my_fread(&palette_size, sizeof(palette_size), fp);
+                palette.resize(palette_size);
+                my_fread(&palette[0], palette_size * 4, fp);
                 fclose(fp);
                 
                 if (remove(argv[i+1]) == -1) {
@@ -325,8 +327,15 @@ void init_misc(void)
     img.fr_type = MANDELBROT;
     img.palette_ip = 0;
 
-    img.cops_nr = 1;
+    img.cops_nr = 7;
     img.cops[0].type = ITER;
+    img.cops[1].type = REAL2;
+    img.cops[2].type = IMAG2;
+    img.cops[3].type = PLUS;
+    img.cops[4].type = NUMBER_VALUE;
+    img.cops[4].value = 4.0;
+    img.cops[5].type = MINUS;
+    img.cops[6].type = PLUS;
 
     /* init preview */
     j_pre.depth = 300;
@@ -450,12 +459,12 @@ void resize_preview(void)
     
     if (JPRE_SIZE/img.ratio < JPRE_SIZE) {
         xw = JPRE_SIZE;
-        yw = JPRE_SIZE/img.ratio;
+        yw = int(JPRE_SIZE/img.ratio);
         if (yw == 0)
             yw = 1;
     }
     else {
-        xw = JPRE_SIZE*img.ratio;
+        xw = int(JPRE_SIZE*img.ratio);
         if (xw == 0)
             xw = 1;
         yw = JPRE_SIZE;
@@ -514,7 +523,8 @@ void duplicate(void)
     }
 
     my_fwrite(&img, sizeof(image_info), fp);
-    my_fwrite(palette, 256*4, fp);
+    my_fwrite(&palette_size, sizeof(palette_size), fp);
+    my_fwrite(&palette[0], palette_size * 4, fp);
     
     if (fclose(fp) != 0) {
         perror("Error writing temp file");
@@ -698,8 +708,8 @@ void start_zooming(void)
 {
     st.z_x = 0;
     st.z_y = 0;
-    st.z_width = ZOOM_BOX_WIDTH * img.user_width;
-    st.z_height = st.z_width/img.ratio;
+    st.z_width = int(ZOOM_BOX_WIDTH * img.user_width);
+    st.z_height = int(st.z_width/img.ratio);
     st.zooming = TRUE;
     
     draw_zoom_box();
@@ -737,7 +747,7 @@ void zoom_in(void)
 void zoom_resize(int arg)
 {
     st.z_width += arg*4;
-    st.z_height = st.z_width/img.ratio;
+    st.z_height = int(st.z_width/img.ratio);
 }
 
 int zoom_is_valid_size(void)
@@ -892,8 +902,8 @@ gint motion_event(GtkWidget* widget, GdkEventMotion* event)
     } else if (st.zooming) {
         draw_zoom_box();
         
-        st.z_x = event->x;
-        st.z_y = event->y;
+        st.z_x = int(event->x);
+        st.z_y = int(event->y);
         
         draw_zoom_box();
     }
@@ -1003,7 +1013,6 @@ int main (int argc, char** argv)
 
     gdk_rgb_init();
     
-    palette = g_malloc(256*4);
     if (palette_load(DEFAULT_PALETTE_FILE) == FALSE) {
         fprintf(stderr, "Can't load palette file %s\n",
                 DEFAULT_PALETTE_FILE);
@@ -1014,7 +1023,7 @@ int main (int argc, char** argv)
     process_args(argc, argv);
     gtk_timeout_add(10*1000, child_reaper, NULL);
     set_image_info(&img, img.user_width, img.user_height, img.aa_factor);
-    set_image_info(&j_pre, JPRE_SIZE, JPRE_SIZE/img.ratio, JPRE_AAFACTOR);
+    set_image_info(&j_pre, JPRE_SIZE, int(JPRE_SIZE/img.ratio), JPRE_AAFACTOR);
     
     /* main window */
     window = gtk_window_new(GTK_WINDOW_TOPLEVEL);
@@ -1076,7 +1085,7 @@ int main (int argc, char** argv)
 
     /* depth spin-button */
     adj = gtk_adjustment_new(img.depth, 1.0, 2147483647.0, 1, 100, 0.0);
-    depth_spin = gtk_spin_button_new(GTK_ADJUSTMENT(adj), 0.0, 0.0);
+    depth_spin = gtk_spin_button_new(GTK_ADJUSTMENT(adj), 0.0, 0);
     gtk_widget_set_usize(depth_spin, 70, 0);
     gtk_box_pack_start(GTK_BOX(hbox), depth_spin, FALSE, FALSE, 0);
     gtk_widget_show(depth_spin);

@@ -1,6 +1,7 @@
 #ifndef __PALETTE_H
 #define __PALETTE_H
 
+#include <stdint.h>
 #include <gtk/gtk.h>
 #include "fractal_types.h"
 
@@ -25,6 +26,6 @@ void palette_apply(image_info* img, int x0, int y0, int width, int height);
 void palette_invert(void);
 void palette_rotate_backward(void);
 void palette_rotate_forward(void);
-guint32 get_pixel(image_info* img, int x, int y);
+uint32_t get_pixel(image_info* img, int x, int y);
 
 #endif /* __PALETTE_H */

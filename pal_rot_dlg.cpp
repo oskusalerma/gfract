@@ -101,7 +101,7 @@ void pal_rot_destroy(GtkWidget* widget,
                      palette_rotation_dialog* dl)
 {
     cycle_stop(dl);
-    g_free(dl);
+    delete dl;
 }
 
 void palette_rotation_dlg_new(palette_rotation_dialog** ptr,
@@ -110,7 +110,7 @@ void palette_rotation_dlg_new(palette_rotation_dialog** ptr,
     GtkWidget* hbox;
     palette_rotation_dialog* dl;
     
-    dl = g_malloc(sizeof(palette_rotation_dialog));
+    dl = new palette_rotation_dialog;
     dl->img = img;
     dl->idle_id = -1;
     *ptr = dl;
