@@ -1,0 +1,24 @@
+You need the following libraries:
+ -GTK 1.2
+ -libpng 1.0.3. 1.0.3 has a crucial bug-fix so earlier versions
+  don't work.
+ -libpng requires zlib. 1.1.2 works for me.
+
+First, if you haven't already done so, go get the accompanying
+gfract-palettes-??.tar.gz file from the same place you got this
+program from. Create the directory /usr/local/share/gfract/palettes
+and unpack the archive into it. Make sure the files are
+world-readable. (The palettes are from fractint's web site. I assume
+they don't mind me redistributing them.)
+
+Then:
+
+-make
+-strip gfract (optional)
+-cp gfract /usr/local/bin (or where-ever)
+-cp gfract.xpm /where/you/keep/your/pixmaps (optional)
+
+Optional: If you use Window Maker, you might want to configure it to
+use the supplied gfract.xpm as an app icon.
+
+Read KEYS for information on keyboard shortcuts.

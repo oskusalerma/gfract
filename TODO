@@ -1,0 +1,11 @@
+-Cropping
+
+-Palette editing.
+
+-Multiple threads for rendering. Should allow a pretty linear increase
+ in speed on SMP machines.
+
+-Periodicity checking.
+
+-Investigate how to get rid of the clobber-warnings in my_png.c. Just
+ adding volatile didn't work.

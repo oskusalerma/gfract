@@ -1,0 +1,44 @@
+0.22
+----
+
+- Documentation changes
+
+0.21
+----
+
+- Big endian support. (Tom Blench, tom@bris.ac.uk)
+
+- Can display time used for calculating fractals.
+
+- Code formatting cleanups.
+
+- Changed from using tmpnam to mkstemp.
+
+- Clarified the license issue by putting the program under GPL.
+
+0.2
+---
+
+- 4:3 aspect ratio limitation removed.
+
+- Minimum image size limit of 320x240 removed.
+
+- Changed the handling of dead child processes to better coexist
+  with (future) threading. This also removed the reliance on
+  BSD signal semantics.
+
+- Palette cycling.
+
+- Added a pixmap file (gfract.xpm) that you can use, for example,
+  as an appicon in Window Maker.
+
+- Better documentation.
+
+- Lots of bugfixes.
+
+- First really public release.
+
+0.1
+---
+
+- First (semi)public release.
