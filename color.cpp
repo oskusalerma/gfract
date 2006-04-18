@@ -231,7 +231,7 @@ std::string str2ops(const std::string& str, color_ops* ops)
 
     if (vec.size() > MAX_OPS)
     {
-        return strf("Too many operations (%d, max is %d)", vec.size(),
+        return strf("Too many operations (%d, max is %d)", (int)vec.size(),
             MAX_OPS);
     }
 
