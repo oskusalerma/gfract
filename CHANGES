@@ -1,3 +1,12 @@
+0.33
+----
+
+- Removed a compiler warning
+
+Jasper Lievisse Adriaanse <jasper@nedbsd.nl>:
+
+ - Makefile tweaking for OpenBSD
+
 0.32
 ----
 
@@ -10,9 +19,9 @@
 
 James W. Morris <james@jwm-art.net>:
 
- -Add -DGTK_DISABLE_DEPRECATED, fix all resulting errors.
+ - Add -DGTK_DISABLE_DEPRECATED, fix all resulting errors.
 
- -Add 'Apply' button to attributes dialog.
+ - Add 'Apply' button to attributes dialog.
 
 0.3
 ---

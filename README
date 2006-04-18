@@ -7,6 +7,9 @@ Fractint does, except that it supports arbitraly large palettes.
 
 For install instructions see the INSTALL file.
 
+Note: there's an OpenBSD port available at
+http://www.openbsd.org/cgi-bin/cvsweb/ports/graphics/gfract/.
+
 Osku Salerma
 osku@iki.fi
 http://www.iki.fi/osku/gfract/
