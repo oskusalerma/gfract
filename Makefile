@@ -1,4 +1,7 @@
-PROG := gfract
+# main GTK frontend
+GTK_FRONTEND := gfract
+GTK_FRONTEND_OBJS := attr_dlg.o color.o color_dlg.o fractal.o globals.o \
+main.o misc.o my_png.o pal_rot_dlg.o palette.o timer.o
 
 CXX := g++
 
@@ -13,17 +16,15 @@ CXXFLAGS := $(DEFS) -O2 -fomit-frame-pointer -ffast-math
 LDFLAGS := -lz
 LDFLAGS := $(shell pkg-config --libs gtk+-2.0 libpng) $(LDFLAGS)
 
-SRC := $(wildcard *.cpp)
-OBJS := $(patsubst %.cpp, %.o, $(SRC))
 HEADERS := $(wildcard *.h *.xpm)
 
-$(PROG): $(OBJS)
-	@echo Linking $(PROG)
-	@$(CXX) $(CXXFLAGS) $(OBJS) $(LDFLAGS) -o $(PROG)
+$(GTK_FRONTEND): $(GTK_FRONTEND_OBJS)
+	@echo Linking $(GTK_FRONTEND)
+	@$(CXX) $(CXXFLAGS) $(GTK_FRONTEND_OBJS) $(LDFLAGS) -o $(GTK_FRONTEND)
 
-%.o: %.cpp $(HEADERS)
+%.o: %.cpp $(HEADERS) Makefile
 	@echo Compiling $<
 	@$(CXX) $(CXXFLAGS) -c $< -o $@
 
 clean:
-	rm -f $(PROG) $(OBJS)
+	rm -f $(GTK_FRONTEND) $(GTK_FRONTEND_OBJS)

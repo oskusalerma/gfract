@@ -1,7 +1,6 @@
 #include <math.h>
 #include <stdio.h>
 #include <algorithm>
-#include "externs.h"
 #include "misc.h"
 #include "color.h"
 
@@ -53,7 +52,6 @@ op_info_t op_info[] = {
     {"imag2", OP_IMAG2, 0, 1, "imag^2"},
     {"xpos", OP_XPOS, 0, 1, "x position"},
     {"ypos", OP_YPOS, 0, 1, "y position"},
-    {"palette_count", OP_PALETTE_COUNT, 0, 1, "palette color count"},
     {"", OP_NUMBER, 0, 1, "number"},
     
     {"dup", OP_DUP, 1, 1, "duplicate"},
@@ -114,9 +112,6 @@ double calculate_color(color_ops* ops, point_info* pi)
         case OP_NUMBER:
             OP0_1(cop->value);
             
-        case OP_PALETTE_COUNT:
-            OP0_1((double)palette_size);
-
             
         case OP_DUP:
             OP1_1(double);

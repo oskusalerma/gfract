@@ -1,4 +1,3 @@
-#include "externs.h"
 #include "fractal_types.h"
 
 
