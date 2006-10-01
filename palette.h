@@ -3,7 +3,7 @@
 
 #include <stdint.h>
 #include <gtk/gtk.h>
-#include "fractal_types.h"
+struct image_info;
 
 #if (G_BYTE_ORDER == G_BIG_ENDIAN)
 #define RGB(r,g,b) ((r) << 24 | ((g) << 16) | ((b) << 8))

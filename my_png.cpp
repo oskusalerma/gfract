@@ -4,9 +4,10 @@
 #include <string.h>
 #include <png.h>
 #include <gtk/gtk.h>
-#include "externs.h"
-#include "palette.h"
 #include "my_png.h"
+#include "externs.h"
+#include "image_info.h"
+#include "palette.h"
 
 /* should be using autoconf... */
 #if PNG_LIBPNG_VER <= 10002

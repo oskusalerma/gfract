@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include "attr_dlg.h"
+#include "image_info.h"
 
 static void width_update(GtkWidget* w, image_attr_dialog* dl);
 static void height_update(GtkWidget* w, image_attr_dialog* dl);

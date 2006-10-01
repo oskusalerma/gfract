@@ -1,7 +1,9 @@
 #ifndef __ATTR_DLG_H
 #define __ATTR_DLG_H
 
-#include "fractal_types.h"
+#include <gtk/gtk.h>
+
+struct image_info;
 
 struct image_attr_dialog
 {

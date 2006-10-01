@@ -12,7 +12,7 @@
 #include "attr_dlg.h"
 #include "color_dlg.h"
 #include "externs.h"
-#include "fractal_types.h"
+#include "image_info.h"
 #include "misc.h"
 #include "my_png.h"
 #include "pal_rot_dlg.h"
@@ -236,6 +236,18 @@ void invert(void)
         rgb_invert(&img);
     
     redraw_image(&img);
+}
+
+void image_info_next_line(image_info* img)
+{
+    fractal_do_row(img->xmin, img->xmax,
+        fractal_calc_y(img->lines_done, img->ymax, img->xmin, img->xmax,
+            img->real_width),
+        img->real_width, img->depth, img->fr_type, img->u.julia.c_re,
+        img->u.julia.c_im, &img->color_in, &img->color_out,
+        &img->raw_data[img->lines_done * img->real_width]);
+
+    img->lines_done++;
 }
 
 void save_cmd(void)
@@ -1032,13 +1044,13 @@ gint idle_callback(image_info* img)
     int y_offset;
 
     if (img->aa_factor == 1) {
-        fractal_next_line(img);
+        image_info_next_line(img);
         palette_apply(img, 0, img->lines_done-1, img->real_width, 1);
     } else {
         int i;
 
         for (i=0; i < img->aa_factor; i++)
-            fractal_next_line(img);
+            image_info_next_line(img);
         do_anti_aliasing(img, 0, img->lines_done/img->aa_factor-1,
                          img->user_width, 1);
     }

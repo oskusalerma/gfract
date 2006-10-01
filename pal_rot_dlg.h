@@ -1,7 +1,9 @@
 #ifndef __PAL_ROT_DLG_H
 #define __PAL_ROT_DLG_H
 
-#include "fractal_types.h"
+#include <gtk/gtk.h>
+
+struct image_info;
 
 struct palette_rotation_dialog
 {

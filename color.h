@@ -3,6 +3,8 @@
 
 #include <string>
 
+/* TODO: convert this to a class */
+
 /** maximum number of operations */
 #define MAX_OPS 256
 
@@ -59,7 +61,7 @@ struct color_ops
     color_op ops[MAX_OPS];
 };
 
-double calculate_color(color_ops* ops, point_info* pi);
+double calculate_color(const color_ops* ops, point_info* pi);
 
 // convert ops to string format
 std::string ops2str(color_ops* ops);

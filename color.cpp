@@ -76,12 +76,12 @@ op_info_t op_info[] = {
     {"tan", OP_TAN, 1, 0, "tan"}
 };
 
-double calculate_color(color_ops* ops, point_info* pi)
+double calculate_color(const color_ops* ops, point_info* pi)
 {
     int sp = 0;
     double stack[MAX_STACK];
 
-    color_op* cop = ops->ops;
+    const color_op* cop = ops->ops;
     int i;
     
     for (i = 0; i < ops->nr; i++)

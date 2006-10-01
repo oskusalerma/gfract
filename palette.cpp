@@ -3,7 +3,7 @@
 #include <stdio.h>
 #include <string.h>
 #include "externs.h"
-#include "fractal_types.h"
+#include "image_info.h"
 #include "palette.h"
 
 #define BUF_SIZE 256

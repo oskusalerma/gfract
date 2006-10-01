@@ -7,9 +7,6 @@
   -http://www.maths.abdn.ac.uk/~igc/tch/mx4002/notes/node72.html has an
   algorithm for converting infix to postfix.
 
--when loading new palette, if coloring algo uses PALETTE_COUNT, and new
- palette has different count to last, automatically recalculate image
-
 -use long double when double's precision runs out (~30% slower)
 
  -probably by templatizing all the calculation functions

@@ -1,7 +1,7 @@
 #include <stdarg.h>
 #include <stdio.h>
 #include "externs.h"
-#include "fractal_types.h"
+#include "image_info.h"
 #include "misc.h"
 #include "palette.h"
 

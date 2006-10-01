@@ -1,6 +1,6 @@
 #include "color_dlg.h"
 #include "color.h"
-#include "fractal_types.h"
+#include "image_info.h"
 #include "main.h"
 
 static void on_destroy(GtkWidget* widget, color_dialog* dl);

@@ -1,80 +1,70 @@
-#include "fractal_types.h"
+#include "fractal.h"
+#include "color.h"
 
-
-/* calculate next line of the fractal
-   */
-void fractal_next_line(image_info* img)
+double fractal_calc_y(int y, double ymax, double xmin, double xmax,
+    int width)
 {
-    int i;
-    uint32_t z;
-    double x,y;
+    return ymax - ((xmax - xmin)/width) * y;
+}
+
+void fractal_do_row(double xmin, double xmax, double y, int width,
+    int depth, fractal_type fr_type, double julia_c_re, double julia_c_im,
+    const color_ops* color_in, const color_ops* color_out, double* output)
+{
+    int i, z;
+    double x;
     double c_re, c_im;
     double re,im;
     double re2,im2;
     point_info pi;
-    
-    y = img->ymax - ((img->xmax - img->xmin)/(double)img->real_width)
-        * (double)img->lines_done;
 
     pi.y = y;
 
     /* silence gcc warnings */
     c_re = c_im = 0.0;
-    
-    for (i=0; i < img->real_width; i++) {
-        x = ((double)i/(double)img->real_width) *
-            (img->xmax - img->xmin) + img->xmin;
 
-        pi.x = x;
+    for (i=0; i < width; i++) {
+        x = ((double)i / width) * (xmax - xmin) + xmin;
 
         re = x;
         im = y;
-        re2 = re*re;
-        im2 = im*im;
+        re2 = re * re;
+        im2 = im * im;
 
-        switch (img->fr_type) {
+        switch (fr_type) {
         case MANDELBROT:
             c_re = x;
             c_im = y;
             break;
+
         case JULIA:
-            c_re = img->u.julia.c_re;
-            c_im = img->u.julia.c_im;
+            c_re = julia_c_re;
+            c_im = julia_c_im;
             break;
         }
-        
-        for (z = 0; z < img->depth; z++)
+
+        for (z = 0; z < depth; z++)
         {
             im = 2.0 * re * im + c_im;
             re = re2 - im2 + c_re;
             re2 = re * re;
             im2 = im * im;
+
             if ((re2 + im2) > 4.0)
             {
                 break;
             }
         }
 
-        color_ops* ops;
-        
-        if (z == img->depth)
-        {
-            ops = &img->color_in;
-        }
-        else
-        {
-            ops = &img->color_out;
-        }
+        const color_ops* ops = (z == depth) ? color_in : color_out;
 
+        pi.x = x;
         pi.re = re;
         pi.re2 = re2;
         pi.im = im;
         pi.im2 = im2;
         pi.iter = z;
-        
-        img->raw_data[img->lines_done*img->real_width + i] =
-            calculate_color(ops, &pi);
-    }
 
-    img->lines_done++;
+        output[i] = calculate_color(ops, &pi);
+    }
 }

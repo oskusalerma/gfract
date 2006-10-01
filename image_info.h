@@ -3,17 +3,13 @@
 
 #include <stdint.h>
 #include <gtk/gtk.h>
+#include "fractal.h"
 #include "color.h"
 
 struct julia_info
 {
     double c_re;
     double c_im;
-};
-
-enum fractal_type
-{
-    MANDELBROT, JULIA
 };
 
 struct image_info
@@ -74,6 +70,7 @@ struct image_info
     color_ops color_in;
 };
 
-void fractal_next_line(image_info* img);
+/* Calculate next line of image. */
+void image_info_next_line(image_info* img);
 
 #endif
