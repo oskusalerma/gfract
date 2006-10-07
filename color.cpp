@@ -17,7 +17,8 @@ stack[sp - 1] = op(stack[sp - 1]); \
 break
 
 #define OP1_1(op) \
-stack[sp++] = op(stack[sp - 1]); \
+stack[sp] = op(stack[sp - 1]); \
+sp++; \
 break
 
 #define OP2_m1(op) \
