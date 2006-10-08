@@ -20,7 +20,7 @@ void on_help(GtkWidget* widget, color_dialog* dl)
         GTK_DIALOG_DESTROY_WITH_PARENT, GTK_MESSAGE_INFO,
         GTK_BUTTONS_OK, "Available operations:\n\n%s",
         get_cop_help().c_str());
-    
+
     g_signal_connect_swapped(dlg, "response", G_CALLBACK(gtk_widget_destroy),
         dlg);
     gtk_widget_show(dlg);
@@ -38,7 +38,7 @@ void do_refresh(color_dialog* dl, bool isApply)
     {
         return;
     }
-    
+
     main_refresh();
     if (!isApply)
     {
@@ -55,7 +55,7 @@ bool update_cops(color_ops* ops, GtkWidget* w, color_dialog* dl)
     if (res.length() == 0)
     {
         *ops = tmp;
-        
+
         return true;
     }
 
@@ -81,7 +81,7 @@ void color_dlg_new(color_dialog** ptr, image_info* img)
     dl = new color_dialog;
     dl->img = img;
     *ptr = dl;
-    
+
     /* DIALOG AREA */
     dl->dialog = gtk_dialog_new();
     g_signal_connect(GTK_OBJECT(dl->dialog), "destroy",
@@ -98,13 +98,13 @@ void color_dlg_new(color_dialog** ptr, image_info* img)
         GTK_SIGNAL_FUNC(on_refresh), dl);
     gtk_box_pack_start(GTK_BOX(GTK_DIALOG(dl->dialog)->action_area),
         dl->ok_button, TRUE, TRUE, 0);
-    
+
     dl->apply_button = gtk_button_new_with_label("Apply");
     g_signal_connect(GTK_OBJECT(dl->apply_button), "clicked",
         GTK_SIGNAL_FUNC(on_refresh), dl);
     gtk_box_pack_start(GTK_BOX(GTK_DIALOG(dl->dialog)->action_area),
         dl->apply_button, TRUE, TRUE, 0);
-    
+
     tmp = gtk_button_new_with_label("Cancel");
     g_signal_connect_object(GTK_OBJECT(tmp), "clicked",
         GTK_SIGNAL_FUNC(gtk_widget_destroy), GTK_OBJECT(dl->dialog),
@@ -114,7 +114,7 @@ void color_dlg_new(color_dialog** ptr, image_info* img)
 
     tmp = gtk_button_new_with_label("Help");
     g_signal_connect_object(GTK_OBJECT(tmp), "clicked",
-        GTK_SIGNAL_FUNC(on_help), GTK_OBJECT(dl->dialog), 
+        GTK_SIGNAL_FUNC(on_help), GTK_OBJECT(dl->dialog),
                 G_CONNECT_SWAPPED);
     gtk_box_pack_start(GTK_BOX(GTK_DIALOG(dl->dialog)->action_area), tmp,
         TRUE, TRUE, 0);
@@ -135,16 +135,16 @@ void color_dlg_new(color_dialog** ptr, image_info* img)
     tbox = gtk_vbox_new(FALSE, 0);
     gtk_container_add(GTK_CONTAINER(out_frame), tbox);
     gtk_container_set_border_width(GTK_CONTAINER(tbox), 10);
-    
+
     dl->out_label = gtk_entry_new();
     gtk_entry_set_text(GTK_ENTRY(dl->out_label),
         ops2str(&img->color_out).c_str());
     gtk_box_pack_start(GTK_BOX(tbox), dl->out_label, TRUE, TRUE, 0);
-        
+
     tbox = gtk_vbox_new(FALSE, 0);
     gtk_container_add(GTK_CONTAINER(in_frame), tbox);
     gtk_container_set_border_width(GTK_CONTAINER(tbox), 10);
-    
+
     dl->in_label = gtk_entry_new();
     gtk_entry_set_text(GTK_ENTRY(dl->in_label),
         ops2str(&img->color_in).c_str());

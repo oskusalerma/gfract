@@ -43,7 +43,7 @@ gint key_event(GtkWidget* widget, GdkEventKey* event,
         cycle_stop(dl);
         break;
     }
-    
+
     return TRUE;
 }
 
@@ -57,7 +57,7 @@ void cycle_backward(GtkWidget* widget,
                     palette_rotation_dialog* dl)
 {
     cycle(dl, false);
-    
+
 }
 
 void cycle(palette_rotation_dialog* dl, bool forward)
@@ -109,12 +109,12 @@ void palette_rotation_dlg_new(palette_rotation_dialog** ptr,
 {
     GtkWidget* hbox;
     palette_rotation_dialog* dl;
-    
+
     dl = new palette_rotation_dialog;
     dl->img = img;
     dl->idle_id = -1;
     *ptr = dl;
-    
+
     dl->window = gtk_window_new(GTK_WINDOW_TOPLEVEL);
     g_signal_connect(GTK_OBJECT(dl->window), "destroy",
                        GTK_SIGNAL_FUNC(pal_rot_destroy),
@@ -138,14 +138,14 @@ void palette_rotation_dlg_new(palette_rotation_dialog** ptr,
                        GTK_SIGNAL_FUNC(step_backward),
                        dl);
     gtk_box_pack_start(GTK_BOX(hbox), dl->step_b, FALSE, FALSE, 0);
-    
+
     dl->cycle_b = gtk_button_new_with_label(" << ");
     g_signal_connect(GTK_OBJECT(dl->cycle_b), "clicked",
                        GTK_SIGNAL_FUNC(cycle_backward),
                        dl);
     gtk_box_pack_start(GTK_BOX(hbox), dl->cycle_b, FALSE, FALSE, 0);
 
-    
+
     dl->stop = gtk_button_new_with_label(" Stop ");
     g_signal_connect(GTK_OBJECT(dl->stop), "clicked",
                        GTK_SIGNAL_FUNC(stop),

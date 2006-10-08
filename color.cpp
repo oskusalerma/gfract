@@ -54,19 +54,19 @@ op_info_t op_info[] = {
     {"xpos", OP_XPOS, 0, 1, "x position"},
     {"ypos", OP_YPOS, 0, 1, "y position"},
     {"", OP_NUMBER, 0, 1, "number"},
-    
+
     {"dup", OP_DUP, 1, 1, "duplicate"},
-    
+
     {"+", OP_PLUS, 2, -1, "plus"},
     {"-", OP_MINUS, 2, -1, "minus"},
     {"*", OP_MULTIPLY, 2, -1, "multiply"},
     {"/", OP_DIVIDE, 2, -1, "divide"},
-    
+
     {"min", OP_MIN, 2, -1, "minimum"},
     {"max", OP_MAX, 2, -1, "maximum"},
     {"pow", OP_POW, 2, -1, "n^m"},
     {"hypot", OP_HYPOT, 2, -1, "sqrt(n^2 + m^2)"},
-     
+
     {"sqrt", OP_SQRT, 1, 0, "square root"},
     {"abs", OP_ABS, 1, 0, "absolute value"},
     {"ln", OP_LN, 1, 0, "natural logarithm"},
@@ -84,40 +84,40 @@ double calculate_color(const color_ops* ops, point_info* pi)
 
     const color_op* cop = ops->ops;
     int i;
-    
+
     for (i = 0; i < ops->nr; i++)
     {
         switch (cop->type)
         {
         case OP_ITER:
             OP0_1((double)pi->iter);
-            
+
         case OP_REAL:
             OP0_1(pi->re);
-            
+
         case OP_REAL2:
             OP0_1(pi->re2);
-            
+
         case OP_IMAG:
             OP0_1(pi->im);
-            
+
         case OP_IMAG2:
             OP0_1(pi->im2);
-            
+
         case OP_XPOS:
             OP0_1(pi->x);
-            
+
         case OP_YPOS:
             OP0_1(pi->y);
-            
+
         case OP_NUMBER:
             OP0_1(cop->value);
-            
-            
+
+
         case OP_DUP:
             OP1_1(double);
 
-            
+
         case OP_PLUS:
             OP2_m1(+);
         case OP_MINUS:
@@ -127,7 +127,7 @@ double calculate_color(const color_ops* ops, point_info* pi)
         case OP_DIVIDE:
             OP2_m1(/);
 
-            
+
         case OP_MIN:
             OP2_pm1(std::min);
 
@@ -140,39 +140,39 @@ double calculate_color(const color_ops* ops, point_info* pi)
         case OP_HYPOT:
             OP2_pm1(hypot);
 
-        
+
         case OP_SQRT:
             OP1_0(sqrt);
-            
+
         case OP_ABS:
             OP1_0(fabs);
-            
+
         case OP_LN:
             OP1_0(log);
-            
+
         case OP_FLOOR:
             OP1_0(floor);
-            
+
         case OP_CEIL:
             OP1_0(ceil);
-            
+
         case OP_SIN:
             OP1_0(sin);
-            
+
         case OP_COS:
             OP1_0(cos);
-            
+
         case OP_TAN:
             OP1_0(tan);
-            
+
         default:
             printf("unknown op type %d (%d)\n", cop->type, i);
             break;
         }
-        
+
         cop++;
     }
-    
+
     if (sp != 1)
       printf("invalid number of values left on stack: %d\n", sp);
 
@@ -182,7 +182,7 @@ double calculate_color(const color_ops* ops, point_info* pi)
 std::string ops2str(color_ops* ops)
 {
     std::string res;
-    
+
     for (int i = 0; i < ops->nr; i++)
     {
         color_op* cop = &ops->ops[i];
@@ -191,7 +191,7 @@ std::string ops2str(color_ops* ops)
         for (int j = 0; j < (int)NELEMS(op_info); j++)
         {
             op_info_t* oi = &op_info[j];
-            
+
             if (cop->type == oi->type)
             {
                 if (cop->type == OP_NUMBER)
@@ -232,18 +232,18 @@ std::string str2ops(const std::string& str, color_ops* ops)
     }
 
     int stack = 0;
-    
+
     for (int i = 0; i < (int)vec.size(); i++)
     {
         std::string item = vec[i];
         std::string err = strf("Error at operation %d ('%s'):\n", i + 1,
             item.c_str());
-        
+
         bool found = false;
         for (int j = 0; j < (int)NELEMS(op_info); j++)
         {
             op_info_t* oi = &op_info[j];
-            
+
             if (item == oi->name)
             {
                 if (stack < oi->req)
@@ -254,7 +254,7 @@ std::string str2ops(const std::string& str, color_ops* ops)
 
                 ops->ops[i].type = oi->type;
                 stack += oi->delta;
-                
+
                 found = true;
                 break;
             }
@@ -270,7 +270,7 @@ std::string str2ops(const std::string& str, color_ops* ops)
             {
                 return err + "Unknown operation";
             }
-            
+
             ops->ops[i].type = OP_NUMBER;
             ops->ops[i].value = tmp;
             stack++;
@@ -281,7 +281,7 @@ std::string str2ops(const std::string& str, color_ops* ops)
     {
         return strf("Algorithm leaves %d values on stack", stack);
     }
-    
+
     ops->nr = vec.size();
 
     return "";
@@ -290,7 +290,7 @@ std::string str2ops(const std::string& str, color_ops* ops)
 std::string get_cop_help(void)
 {
     std::string str;
-    
+
     for (int i = 0; i < (int)NELEMS(op_info); i++)
     {
         op_info_t* oi = &op_info[i];

@@ -94,7 +94,7 @@ static void invert(void);
 static void switch_fractal_type(void);
 static void print_help(void);
 static void print_version(void);
-     
+
 /* DIALOG FUNCTIONS */
 
 /* image attribute */
@@ -209,7 +209,7 @@ void process_args(int argc, char** argv)
                 palette.resize(palette_size);
                 my_fread(&palette[0], palette_size * 4, fp);
                 fclose(fp);
-                
+
                 if (remove(argv[i+1]) == -1) {
                     perror("Can't delete temp file");
                     exit(1);
@@ -234,7 +234,7 @@ void invert(void)
         palette_apply(&img, 0, 0, img.user_width, img.user_height);
     else
         rgb_invert(&img);
-    
+
     redraw_image(&img);
 }
 
@@ -288,7 +288,7 @@ void reapply_palette(void)
         palette_apply(&img, 0, 0, img.user_width, img.user_height);
     else
         do_anti_aliasing(&img, 0, 0, img.user_width, img.user_height);
-    
+
     redraw_image(&img);
 }
 
@@ -312,7 +312,7 @@ void load_palette_cmd(void)
 {
     GtkWidget* file_sel;
     GtkWidget* button;
-    
+
     file_sel = gtk_file_selection_new("Load palette");
     gtk_file_selection_hide_fileop_buttons(GTK_FILE_SELECTION(file_sel));
     gtk_file_selection_set_filename(GTK_FILE_SELECTION(file_sel),
@@ -324,14 +324,14 @@ void load_palette_cmd(void)
         GTK_OBJECT(GTK_FILE_SELECTION(file_sel)->cancel_button),
                        "clicked", GTK_SIGNAL_FUNC(gtk_widget_destroy),
                        GTK_OBJECT(file_sel), G_CONNECT_SWAPPED);
-    
+
     button = gtk_button_new_with_label("Apply palette");
     gtk_box_pack_start(GTK_BOX(GTK_FILE_SELECTION(file_sel)->action_area),
                        button, FALSE, FALSE, 0);
     g_signal_connect(GTK_OBJECT(button), "clicked",
                        GTK_SIGNAL_FUNC(palette_apply_cmd), file_sel);
     gtk_widget_show(button);
-    
+
     gtk_widget_show(file_sel);
 }
 
@@ -341,7 +341,7 @@ void init_misc(void)
     img.real_width = img.user_width = DEFAULT_WIDTH;
     img.real_height = img.user_height = DEFAULT_HEIGHT;
     img.aa_factor = DEFAULT_AAFACTOR;
-    
+
     img.depth = 300;
     img.rgb_data = NULL;
     img.raw_data = NULL;
@@ -378,7 +378,7 @@ void init_misc(void)
 
     j_pre.u.julia.c_re = 0.3;
     j_pre.u.julia.c_im = 0.6;
-    
+
     j_pre.idle_id = -1;
     j_pre.j_pre = true;
     j_pre.fr_type = JULIA;
@@ -386,11 +386,11 @@ void init_misc(void)
 
     j_pre.color_out.nr = 1;
     j_pre.color_out.ops[0].type = OP_ITER;
-    
+
     j_pre.color_in.nr = 1;
     j_pre.color_in.ops[0].type = OP_NUMBER;
     j_pre.color_in.ops[0].value = 0.0;
-    
+
     /* misc init */
     st.zooming = false;
     st.julia_browsing = false;
@@ -407,7 +407,7 @@ GdkRectangle horiz_intersect(GdkRectangle* a1, GdkRectangle* a2)
 {
     GdkRectangle tmp;
     int ax1, ax2, bx1, bx2, cx1, cx2;
-    
+
     tmp.width = 0;
     tmp.y = a1->y;
     tmp.height = a1->height;
@@ -427,7 +427,7 @@ GdkRectangle horiz_intersect(GdkRectangle* a1, GdkRectangle* a2)
 
     tmp.x = cx1;
     tmp.width = cx2-cx1+1;
-        
+
     return tmp;
 }
 
@@ -448,12 +448,12 @@ gint do_palette_rotation(bool forward)
         palette_rotate_forward();
     else
         palette_rotate_backward();
-    
-    if (img.aa_factor == 1) 
+
+    if (img.aa_factor == 1)
         palette_apply(&img, 0, 0, img.user_width, img.user_height);
     else
         do_anti_aliasing(&img, 0, 0, img.user_width, img.user_height);
-    
+
     redraw_image(&img);
 
     return TRUE;
@@ -480,7 +480,7 @@ void image_attr_apply_cmd(GtkWidget* w, image_attr_dialog* dl)
     } else
         gtk_widget_set_size_request(drawing_area,
                               img.user_width, img.user_height);
-        
+
     start_rendering(&img);
 
     resize_preview();
@@ -507,7 +507,7 @@ void main_refresh(void)
 void resize_preview(void)
 {
     int xw,yw;
-    
+
     if (JPRE_SIZE/img.ratio < JPRE_SIZE) {
         xw = JPRE_SIZE;
         yw = int(JPRE_SIZE/img.ratio);
@@ -520,7 +520,7 @@ void resize_preview(void)
             xw = 1;
         yw = JPRE_SIZE;
     }
-    
+
     set_image_info(&j_pre, xw, yw, JPRE_AAFACTOR);
     gtk_widget_set_size_request(j_pre.drawing_area, xw, yw);
 }
@@ -558,7 +558,7 @@ gint child_reaper(gpointer nothing)
     /* wait until all dead child processes are cleaned up */
     while (waitpid(-1, NULL, WNOHANG) > 0)
         ;
-    
+
     return TRUE;
 }
 
@@ -568,13 +568,13 @@ void duplicate(void)
     int fd;
     FILE* fp;
     pid_t result;
-    
+
     fd = mkstemp(fname);
     if (fd == -1) {
         perror("Can't create temp file");
         exit(1);
     }
-    
+
     fp = fdopen(fd, "w+");
     if (fp == NULL) {
         perror("Can't create temp file");
@@ -584,14 +584,14 @@ void duplicate(void)
     my_fwrite(&img, sizeof(image_info), fp);
     my_fwrite(&palette_size, sizeof(palette_size), fp);
     my_fwrite(&palette[0], palette_size * 4, fp);
-    
+
     if (fclose(fp) != 0) {
         perror("Error writing temp file");
         exit(1);
     }
 
     result = fork();
-    
+
     if (result == 0) {
         close(ConnectionNumber(gdk_display));
         execl(program_name, program_name, DUMP_COMMAND,
@@ -610,7 +610,7 @@ void get_coords(double* x, double* y)
     if (y != NULL)
         *y = img.ymax - ((img.xmax - img.xmin)/(double)img.user_width)
             * (*y);
-    
+
     if (x != NULL)
         *x = ((*x)/(double)img.user_width) *
             (img.xmax - img.xmin) + img.xmin;
@@ -661,7 +661,7 @@ void create_menus(GtkWidget* vbox)
     menu_add(menu, NULL, NULL);
     menu_add(menu, "Exit", quit);
     menu_bar_add(menu_bar, menu, "File");
-    
+
     menu = gtk_menu_new();
     menu_add(menu, "Attributes...", do_attr_dialog);
     menu_add(menu, "Coloring...", do_color_dialog);
@@ -676,7 +676,7 @@ void create_menus(GtkWidget* vbox)
     menu_add(menu, "Invert", invert);
     menu_add(menu, "Cycle...", do_pal_rot_dialog);
     menu_bar_add(menu_bar, menu, "Palette");
-    
+
     menu = gtk_hseparator_new();
     gtk_widget_show(menu);
     gtk_box_pack_start(GTK_BOX(vbox), menu, FALSE, FALSE, 0);
@@ -707,7 +707,7 @@ void start_rendering(image_info* img)
         gtk_spin_button_update(GTK_SPIN_BUTTON(depth_spin));
         img->depth =
             gtk_spin_button_get_value_as_int(GTK_SPIN_BUTTON(depth_spin));
-        
+
         gtk_progress_bar_set_fraction(GTK_PROGRESS_BAR(pbar), 0.0);
         gtk_widget_show(pbar);
         gtk_label_set_text(GTK_LABEL(recalc_button_label), TEXT_STOP);
@@ -750,7 +750,7 @@ void stop_julia_browsing(void)
 gint j_pre_delete(GtkWidget* widget, GdkEvent* event, gpointer data)
 {
     stop_julia_browsing();
-    
+
     return TRUE;
 }
 
@@ -761,7 +761,7 @@ void draw_zoom_box(void)
     gdk_draw_rectangle(drawing_area->window, drawing_area->style->white_gc,
                        FALSE, st.z_x, st.z_y, st.z_width,
                        st.z_height);
-    
+
     gdk_gc_set_function(drawing_area->style->white_gc, GDK_COPY);
 }
 
@@ -772,7 +772,7 @@ void start_zooming(void)
     st.z_width = int(ZOOM_BOX_WIDTH * img.user_width);
     st.z_height = int(st.z_width/img.ratio);
     st.zooming = true;
-    
+
     draw_zoom_box();
 }
 
@@ -794,10 +794,10 @@ void zoom_in(void)
     ymax = (double)st.z_y;
     xmin = (double)st.z_x;
     xmax = (double)(st.z_x+st.z_width-1);
-    
+
     get_coords(&xmin, &ymax);
     get_coords(&xmax, NULL);
-    
+
     img.ymax = ymax;
     img.xmin = xmin;
     img.xmax = xmax;
@@ -846,17 +846,17 @@ void zoom_in_func(GtkWidget* widget)
 void zoom_out_func(GtkWidget* widget)
 {
     double ymin,half_w,half_h;
-        
+
     ymin = img.ymax - ((img.xmax - img.xmin)/(double)img.real_width)
         * (double)(img.real_height-1);
 
     half_w = (img.xmax-img.xmin)/2.0;
     half_h = (img.ymax-ymin)/2.0;
-    
+
     img.ymax += half_h;
     img.xmin -= half_w;
     img.xmax += half_w;
-    
+
     start_rendering(&img);
 }
 
@@ -877,7 +877,7 @@ void toggle_palette_ip(GtkWidget* widget)
 gint button_press_event(GtkWidget* widget, GdkEventButton* event)
 {
     gtk_widget_grab_focus(img.drawing_area);
-    
+
     /* ignore double- and triple clicks */
     if ( (event->type == GDK_2BUTTON_PRESS) ||
          (event->type == GDK_3BUTTON_PRESS) )
@@ -888,7 +888,7 @@ gint button_press_event(GtkWidget* widget, GdkEventButton* event)
     if ( (zoom_timer != -1) && ( (event->button == 1) ||
                                  (event->button == 3) ) )
         return TRUE;
-    
+
     if (st.zooming) {
         draw_zoom_box();
         if (event->button == 1) {
@@ -909,14 +909,14 @@ gint button_press_event(GtkWidget* widget, GdkEventButton* event)
                 zoom_timer = g_timeout_add(ZOOM_INTERVAL,
                                            (GtkFunction)zoom_callback,
                                            (gpointer)-2);
-                
+
         }
         draw_zoom_box();
     } else if (st.julia_browsing) {
         if (event->button == 1) {
             img.u.julia.c_re = event->x;
             img.u.julia.c_im = event->y;
-            
+
             get_coords(&img.u.julia.c_re, &img.u.julia.c_im);
             stop_julia_browsing();
 
@@ -924,12 +924,12 @@ gint button_press_event(GtkWidget* widget, GdkEventButton* event)
             img.old_xmin = img.xmin;
             img.old_xmax = img.xmax;
             img.old_ymax = img.ymax;
-            
+
             img.xmin = j_pre.xmin;
             img.xmax = j_pre.xmax;
             img.ymax = j_pre.ymax;
             img.fr_type = JULIA;
-            
+
             start_rendering(&img);
         }
     }
@@ -948,7 +948,7 @@ void kill_zoom_timers(void)
 gint button_release_event(GtkWidget* widget, GdkEventButton* event)
 {
     kill_zoom_timers();
-    
+
     return TRUE;
 }
 
@@ -964,10 +964,10 @@ gint motion_event(GtkWidget* widget, GdkEventMotion* event)
         start_rendering(&j_pre);
     } else if (st.zooming) {
         draw_zoom_box();
-        
+
         st.z_x = int(event->x);
         st.z_y = int(event->y);
-        
+
         draw_zoom_box();
     }
 
@@ -978,7 +978,7 @@ gint expose_event(GtkWidget* widget, GdkEventExpose* event,
                   image_info* img)
 {
     GdkRectangle pic_area, padding_area,tmp;
-    
+
     /* sometimes gtk gives us invalid exposes when we're changing
        image size, and when that happens, draw_image below segfaults
        when it's trying to access rgb_data at offsets way past the
@@ -1016,14 +1016,14 @@ gint expose_event(GtkWidget* widget, GdkEventExpose* event,
                            padding_area.x, padding_area.y,
                            padding_area.width, padding_area.height);
     }
-    
+
     return TRUE;
 }
 
 gint key_event(GtkWidget* widget, GdkEventKey* event)
 {
     int ret = FALSE;
-    
+
     switch (event->keyval)
     {
     case GDK_Return:
@@ -1032,10 +1032,10 @@ gint key_event(GtkWidget* widget, GdkEventKey* event)
             zoom_in();
             ret = TRUE;
         }
-        
+
         break;
     }
-    
+
     return ret;
 }
 
@@ -1058,20 +1058,20 @@ gint idle_callback(image_info* img)
     y_offset = img->lines_done/img->aa_factor-1;
 
     GdkRectangle rect;
-    
+
     rect.x = 0;
     rect.width = img->user_width;
     rect.y = y_offset;
     rect.height = 1;
 
     gdk_window_invalidate_rect(img->drawing_area->window, &rect, TRUE);
-    
+
     if (!img->j_pre)
     {
         gtk_progress_bar_set_fraction(GTK_PROGRESS_BAR(pbar),
             (float)img->lines_done / img->real_height);
     }
-    
+
     if (img->lines_done == img->real_height)
     {
         stop_rendering(img);
@@ -1096,7 +1096,7 @@ int main (int argc, char** argv)
     GtkWidget* button;
     GtkWidget* tmp;
     GtkObject* adj;
-    
+
     program_name = argv[0];
     gtk_init(&argc, &argv);
 
@@ -1112,7 +1112,7 @@ int main (int argc, char** argv)
     set_image_info(&img, img.user_width, img.user_height, img.aa_factor);
     set_image_info(&j_pre, JPRE_SIZE, int(JPRE_SIZE/img.ratio),
         JPRE_AAFACTOR);
-    
+
     /* main window */
     window = gtk_window_new(GTK_WINDOW_TOPLEVEL);
     gtk_window_set_resizable(GTK_WINDOW(window), FALSE);
@@ -1124,13 +1124,13 @@ int main (int argc, char** argv)
                        GTK_SIGNAL_FUNC(j_pre_delete), NULL);
     gtk_window_set_title(GTK_WINDOW(j_pre_window), "Preview");
     gtk_window_set_resizable(GTK_WINDOW(j_pre_window), FALSE);
-    
+
     vbox = gtk_vbox_new (FALSE, 0);
     gtk_container_add (GTK_CONTAINER (window), vbox);
     gtk_widget_show (vbox);
 
     create_menus(vbox);
-    
+
     g_signal_connect (GTK_OBJECT (window), "destroy",
                         GTK_SIGNAL_FUNC (quit), NULL);
 
@@ -1185,7 +1185,7 @@ int main (int argc, char** argv)
     g_signal_connect(GTK_OBJECT(palette_ip), "toggled",
         GTK_SIGNAL_FUNC(toggle_palette_ip), NULL);
     gtk_widget_show(palette_ip);
-    
+
     /* recalc button */
     button = gtk_button_new();
     recalc_button_label = gtk_label_new(TEXT_STOP);
@@ -1197,7 +1197,7 @@ int main (int argc, char** argv)
                        GTK_SIGNAL_FUNC(recalc_button), NULL);
     gtk_box_pack_end(GTK_BOX(hbox), button, FALSE, FALSE, 0);
     gtk_widget_show(button);
-    
+
     /* progress bar */
     pbar = gtk_progress_bar_new();
     gtk_progress_bar_set_orientation(GTK_PROGRESS_BAR(pbar),
@@ -1215,11 +1215,11 @@ int main (int argc, char** argv)
     gtk_widget_set_events (tmp, GDK_KEY_PRESS_MASK |
         GDK_BUTTON_PRESS_MASK | GDK_BUTTON_RELEASE_MASK |
         GDK_POINTER_MOTION_MASK | GDK_EXPOSURE_MASK);
-    gtk_widget_set_size_request(tmp, (img.user_width >= MIN_WINDOW_WIDTH) 
+    gtk_widget_set_size_request(tmp, (img.user_width >= MIN_WINDOW_WIDTH)
                 ? img.user_width : MIN_WINDOW_WIDTH, img.user_height);
     gtk_box_pack_start(GTK_BOX(vbox), tmp, TRUE, TRUE, 0);
     gtk_widget_show(tmp);
-    
+
     g_signal_connect(GTK_OBJECT(tmp), "key_press_event",
         GTK_SIGNAL_FUNC(key_event), NULL);
     g_signal_connect(GTK_OBJECT(tmp), "button_press_event",
@@ -1241,7 +1241,7 @@ int main (int argc, char** argv)
                        GTK_SIGNAL_FUNC(expose_event), &j_pre);
     gtk_widget_show(tmp);
     j_pre.drawing_area = tmp;
-    
+
     start_rendering(&img);
     gtk_widget_show(window);
 

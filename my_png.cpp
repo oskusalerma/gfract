@@ -31,9 +31,9 @@ void save_file(image_info* img, char* filename)
     png_color* png_pal = NULL;
     uint8_t* pal_data = NULL;
     uint8_t** row_p = NULL;
-    
+
     pal = (img->aa_factor == 1) && !img->palette_ip;
-    
+
     fp = fopen(filename, "w");
     if (fp == NULL) {
         fprintf(stderr, "Can't open file %s: %s\n", filename,
@@ -100,7 +100,7 @@ void save_file(image_info* img, char* filename)
     else
     {
         /* convert data to palette index format */
-        
+
         int pixels = img->user_width * img->user_height;
         uint8_t* dst;
         double* src;
@@ -125,7 +125,7 @@ void save_file(image_info* img, char* filename)
         else
             row_p[i] = (uint8_t*)&(img->rgb_data[i * img->user_width]);
     }
-    
+
     /* write image */
     png_write_image(png_ptr, row_p);
 
@@ -157,7 +157,7 @@ void ask_overwrite(image_info* img, char* filename)
     GtkWidget* dl;
     GtkWidget* vbox;
     GtkWidget* tmp;
-    
+
     snprintf(buf, 256, "%s exists, overwrite?", filename);
     dl = gtk_dialog_new();
     gtk_window_set_title(GTK_WINDOW(dl), "File exists!");
@@ -174,7 +174,7 @@ void ask_overwrite(image_info* img, char* filename)
     tmp = gtk_label_new(buf);
     gtk_box_pack_start(GTK_BOX(vbox), tmp, TRUE, TRUE, 0);
     gtk_widget_show(tmp);
-    
+
     tmp = gtk_button_new_with_label("OK");
     gtk_box_pack_start(GTK_BOX(GTK_DIALOG(dl)->action_area),
                        tmp, TRUE, TRUE, 0);
@@ -185,7 +185,7 @@ void ask_overwrite(image_info* img, char* filename)
                               GTK_SIGNAL_FUNC(gtk_widget_destroy),
                               GTK_OBJECT(dl), G_CONNECT_SWAPPED);
     gtk_widget_show(tmp);
-    
+
     tmp = gtk_button_new_with_label("Cancel");
     g_signal_connect_object(GTK_OBJECT(tmp), "clicked",
                               GTK_SIGNAL_FUNC(gtk_widget_destroy),
@@ -221,7 +221,7 @@ void do_png_save(image_info* img)
 {
     if (filesel)
         return;
-    
+
     filesel = gtk_file_selection_new("Save as PNG");
     gtk_file_selection_hide_fileop_buttons(GTK_FILE_SELECTION(filesel));
     g_signal_connect(GTK_OBJECT(filesel), "destroy",

@@ -28,7 +28,7 @@ void width_update(GtkWidget* w, image_attr_dialog* dl)
                                     (gpointer)G_CALLBACK(height_update),
                                     dl);
     }
-    
+
     update_text(GTK_LABEL(dl->text), width,
                 gtk_spin_button_get_value_as_int(
                     GTK_SPIN_BUTTON(dl->height)),
@@ -55,7 +55,7 @@ void height_update(GtkWidget* w, image_attr_dialog* dl)
                                     (gpointer)G_CALLBACK(width_update),
                                     dl);
     }
-    
+
     update_text(GTK_LABEL(dl->text),
                 gtk_spin_button_get_value_as_int(
                     GTK_SPIN_BUTTON(dl->width)), height,
@@ -69,7 +69,7 @@ void aa_update(GtkWidget* w, image_attr_dialog* dl)
 
     if (aa <= 0)
         return;
-    
+
     update_text(GTK_LABEL(dl->text),
                 gtk_spin_button_get_value_as_int(
                     GTK_SPIN_BUTTON(dl->width)),
@@ -125,7 +125,7 @@ void attr_dlg_new(image_attr_dialog** ptr, image_info* img)
     gtk_window_set_title(GTK_WINDOW(dl->dialog), "Attributes");
     gtk_window_set_resizable(GTK_WINDOW(dl->dialog), FALSE);
     gtk_window_set_position(GTK_WINDOW(dl->dialog), GTK_WIN_POS_MOUSE);
-    
+
     dl->ok_button = gtk_button_new_with_label("OK");
     gtk_box_pack_start(GTK_BOX(GTK_DIALOG(dl->dialog)->action_area),
                        dl->ok_button, TRUE, TRUE, 0);
@@ -155,7 +155,7 @@ void attr_dlg_new(image_attr_dialog** ptr, image_info* img)
                        TRUE, TRUE, 0);
     gtk_container_set_border_width(GTK_CONTAINER(vbox), 10);
     gtk_widget_show(vbox);
-    
+
     tmp = gtk_label_new("Width:");
     gtk_misc_set_alignment(GTK_MISC(tmp), 0.0, 0.5);
     gtk_table_attach_defaults(GTK_TABLE(table), tmp, 0, 1, 0, 1);
@@ -170,7 +170,7 @@ void attr_dlg_new(image_attr_dialog** ptr, image_info* img)
                        dl);
     gtk_widget_show(tmp);
     dl->width = tmp;
-    
+
     tmp = gtk_label_new("Height:");
     gtk_misc_set_alignment(GTK_MISC(tmp), 0.0, 0.5);
     gtk_table_attach_defaults(GTK_TABLE(table), tmp, 0, 1, 1, 2);
@@ -185,7 +185,7 @@ void attr_dlg_new(image_attr_dialog** ptr, image_info* img)
                        dl);
     gtk_widget_show(tmp);
     dl->height = tmp;
-    
+
     tmp = gtk_label_new("Anti-aliasing factor:\n(1 = no anti-aliasing)");
     gtk_misc_set_alignment(GTK_MISC(tmp), 0.0, 0.5);
     gtk_label_set_justify(GTK_LABEL(tmp), GTK_JUSTIFY_LEFT);
@@ -200,7 +200,7 @@ void attr_dlg_new(image_attr_dialog** ptr, image_info* img)
                        dl);
     gtk_widget_show(tmp);
     dl->aa = tmp;
-    
+
     tmp = gtk_check_button_new_with_label("Constrain ratio");
     gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(tmp), TRUE);
     gtk_table_attach_defaults(GTK_TABLE(table), tmp, 0, 2, 3, 4);
@@ -209,7 +209,7 @@ void attr_dlg_new(image_attr_dialog** ptr, image_info* img)
                        dl);
     gtk_widget_show(tmp);
     dl->const_ra = tmp;
-    
+
     tmp = gtk_label_new("");
     update_text(GTK_LABEL(tmp), img->user_width, img->user_height,
                 img->aa_factor);
@@ -217,9 +217,9 @@ void attr_dlg_new(image_attr_dialog** ptr, image_info* img)
     gtk_table_attach_defaults(GTK_TABLE(table), tmp, 0, 2, 4, 5);
     gtk_widget_show(tmp);
     dl->text = tmp;
-    
+
     gtk_box_pack_start(GTK_BOX(vbox), table, TRUE, TRUE, 0);
     gtk_widget_show(table);
-    
+
     gtk_widget_show(dl->dialog);
 }

@@ -12,11 +12,11 @@ std::string strf(const char* format, ...)
 {
     va_list ap;
     std::string str;
-    
+
     va_start(ap, format);
     vstrf(&str, format, ap);
     va_end(ap);
-    
+
     return str;
 }
 
@@ -48,7 +48,7 @@ void split(const std::string& str, std::vector<std::string>* vec)
     std::string tmp;
 
     vec->clear();
-    
+
     const char* data = str.c_str();
     while (*data)
     {
@@ -66,7 +66,7 @@ void split(const std::string& str, std::vector<std::string>* vec)
         {
             tmp += ch;
         }
-        
+
         data++;
     }
 
@@ -91,7 +91,7 @@ void set_image_info(image_info* img, int w, int h, int aa_factor)
     img->user_height = h;
     img->aa_factor = aa_factor;
     img->ratio = (double)w/h;
-    
+
     if (aa_factor < 1) {
         fprintf(stderr, "aa_factor must be >= 1\n");
         gtk_main_quit();
@@ -154,7 +154,7 @@ void do_anti_aliasing(image_info* img, int x0, int y0, int width,
                       int height)
 {
     int x,y;
-    
+
     for (y=y0; y < y0+height; y++) {
         for (x=x0; x < x0 + width; x++) {
             do_aa_pixel(img, x, y);
