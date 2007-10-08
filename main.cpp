@@ -3,6 +3,7 @@
 #include <string.h>
 #include <signal.h>
 #include <algorithm>
+#include <stdexcept>
 #include <unistd.h>
 #include <sys/types.h>
 #include <sys/wait.h>
@@ -42,7 +43,6 @@
 #define JPRE_AAFACTOR 2
 
 #define DUMP_COMMAND "--read-dump-from"
-#define DEFAULT_PALETTE_FILE "/usr/local/share/gfract/palettes/blues.map"
 
 struct status_info
 {
@@ -73,10 +73,13 @@ static void kill_zoom_timers(void);
 static void zoom_resize(int arg);
 static void resize_preview(void);
 static int zoom_is_valid_size(void);
+static int find_palette_by_name(const std::string& name);
 static void quit(void);
 static void redraw_image(image_info* img);
 static void create_menus(GtkWidget* vbox);
-static GtkWidget* menu_add(GtkWidget* menu, char* name, void (*func)(void));
+static void menu_add_item(GtkWidget* menu, GtkWidget* item);
+static GtkWidget* menu_add(GtkWidget* menu, const char* name, GCallback func,
+    void* arg = NULL);
 static void get_coords(double* x, double* y);
 static GdkRectangle horiz_intersect(GdkRectangle* a1, GdkRectangle* a2);
 static void my_fread(void* ptr, int size, FILE* fp);
@@ -108,6 +111,7 @@ static void do_color_dialog(void);
 /* palette loading */
 void reapply_palette(void);
 static void load_palette_cmd(void);
+static void load_builtin_palette_cmd(void* arg);
 static void palette_apply_cmd(GtkWidget* w, GtkFileSelection* fs);
 static void palette_ok_cmd(GtkWidget* w, GtkFileSelection* fs);
 
@@ -333,6 +337,14 @@ void load_palette_cmd(void)
     gtk_widget_show(button);
 
     gtk_widget_show(file_sel);
+}
+
+void load_builtin_palette_cmd(void* arg)
+{
+    int n = reinterpret_cast<int>(arg);
+
+    palette_load_builtin(n);
+    reapply_palette();
 }
 
 void init_misc(void)
@@ -616,36 +628,42 @@ void get_coords(double* x, double* y)
             (img.xmax - img.xmin) + img.xmin;
 }
 
-GtkWidget* menu_add(GtkWidget* menu, char* name, void (*func)(void))
+void menu_add_item(GtkWidget* menu, GtkWidget* item)
+{
+    gtk_menu_shell_append(GTK_MENU_SHELL(menu), item);
+    gtk_widget_show(item);
+}
+
+GtkWidget* menu_add(GtkWidget* menu, const char* name, GCallback func,
+    void* arg)
 {
     GtkWidget* item;
 
     if (name != NULL) {
         item = gtk_menu_item_new_with_label(name);
-        g_signal_connect_object(GTK_OBJECT(item), "activate",
-                        GTK_SIGNAL_FUNC(func), NULL, G_CONNECT_SWAPPED);
+        g_signal_connect_swapped(GTK_OBJECT(item), "activate", func, arg);
     } else
         /* just add a separator line to the menu */
         item = gtk_menu_item_new();
 
-    gtk_menu_shell_append(GTK_MENU_SHELL(menu), item);
-    gtk_widget_show(item);
+    menu_add_item(menu, item);
 
     return item;
 }
 
-void menu_bar_add(GtkWidget* menubar, GtkWidget* submenu, char* name)
+void menu_bar_add(GtkWidget* menu, GtkWidget* submenu, char* name)
 {
     GtkWidget* temp = gtk_menu_item_new_with_label(name);
     gtk_widget_show(temp);
 
     gtk_menu_item_set_submenu(GTK_MENU_ITEM(temp), submenu);
-    gtk_menu_shell_append(GTK_MENU_SHELL(menubar), temp);
+    gtk_menu_shell_append(GTK_MENU_SHELL(menu), temp);
 }
 
 void create_menus(GtkWidget* vbox)
 {
     GtkWidget* menu;
+    GtkWidget* menu2;
     GtkWidget* menu_bar;
 
     menu_bar = gtk_menu_bar_new();
@@ -670,8 +688,18 @@ void create_menus(GtkWidget* vbox)
                              switch_fractal_type);
     menu_bar_add(menu_bar, menu, "Image");
 
+    menu2 = gtk_menu_new();
+    menu_add_item(menu2, gtk_tearoff_menu_item_new());
+
+    for (int i = 0; i < palette_get_nr_of_builtins(); i++) {
+        menu_add(menu2, palette_get_builtin_name(i),
+            G_CALLBACK(load_builtin_palette_cmd),
+            reinterpret_cast<void*>(i));
+    }
+
     menu = gtk_menu_new();
     menu_add(menu, "Load", load_palette_cmd);
+    menu_bar_add(menu, menu2, "Builtin");
     menu_add(menu, NULL, NULL);
     menu_add(menu, "Invert", invert);
     menu_add(menu, "Cycle...", do_pal_rot_dialog);
@@ -1089,6 +1117,17 @@ void quit(void)
   gtk_main_quit();
 }
 
+int find_palette_by_name(const std::string& name)
+{
+    for (int i = 0; i < palette_get_nr_of_builtins(); i++) {
+        if (name == palette_get_builtin_name(i)) {
+            return i;
+        }
+    }
+
+    throw std::invalid_argument("can't find palette " + name);
+}
+
 int main (int argc, char** argv)
 {
     GtkWidget* vbox;
@@ -1100,11 +1139,7 @@ int main (int argc, char** argv)
     program_name = argv[0];
     gtk_init(&argc, &argv);
 
-    if (!palette_load(DEFAULT_PALETTE_FILE)) {
-        fprintf(stderr, "Can't load palette file %s\n",
-                DEFAULT_PALETTE_FILE);
-        exit(1);
-    }
+    palette_load_builtin(find_palette_by_name("blues"));
 
     init_misc();
     process_args(argc, argv);

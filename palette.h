@@ -19,6 +19,14 @@ struct image_info;
 #error Your machine has an unsupported byte order. Please send patch :)
 #endif
 
+// get number of builtin palettes
+int palette_get_nr_of_builtins(void);
+
+// get name of the given builtin palette
+const char* palette_get_builtin_name(int n);
+
+// load the specified builtin palette
+void palette_load_builtin(int n);
 
 bool palette_load(char* filename);
 char* palette_get_filename(void);

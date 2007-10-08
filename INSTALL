@@ -4,12 +4,10 @@ You need the following libraries:
  -libpng
  -libz
 
-If you haven't already done so, go get the accompanying
-gfract-palettes-??.tar.gz file from the same place you got this program
-from. Create the directory /usr/local/share/gfract/palettes and unpack the
-archive into it. Make sure the files are world-readable. (The palettes are
-from fractint's web site. I assume they don't mind me redistributing
-them.)
+You also need Python for one step of the compile process.
+
+Optional: Get the gfract-palettes-??.tar.gz file from the same place you
+got this program from and unpack it to your chosen location.
 
 Then:
 

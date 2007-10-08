@@ -1,7 +1,7 @@
 # main GTK frontend
 GTK_FRONTEND := gfract
 GTK_FRONTEND_OBJS := attr_dlg.o color.o color_dlg.o fractal.o globals.o \
-main.o misc.o my_png.o pal_rot_dlg.o palette.o timer.o
+main.o misc.o my_png.o pal_rot_dlg.o palette.o timer.o palettes.o
 
 CXX := g++
 
@@ -17,6 +17,7 @@ LDFLAGS := -lz
 LDFLAGS := $(shell pkg-config --libs gtk+-2.0 libpng) $(LDFLAGS)
 
 HEADERS := $(wildcard *.h *.xpm)
+PALETTES := $(wildcard palettes/*.map)
 
 $(GTK_FRONTEND): $(GTK_FRONTEND_OBJS)
 	@echo Linking $(GTK_FRONTEND)
@@ -26,5 +27,8 @@ $(GTK_FRONTEND): $(GTK_FRONTEND_OBJS)
 	@echo Compiling $<
 	@$(CXX) $(CXXFLAGS) -c $< -o $@
 
+palettes.cpp: make_palettes.py $(PALETTES)
+	./make_palettes.py
+
 clean:
-	rm -f $(GTK_FRONTEND) $(GTK_FRONTEND_OBJS)
+	rm -f $(GTK_FRONTEND) $(GTK_FRONTEND_OBJS) palettes.cpp

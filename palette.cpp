@@ -5,11 +5,59 @@
 #include "externs.h"
 #include "image_info.h"
 #include "palette.h"
+#include "palette_internal.h"
+
+namespace {
+    typedef std::vector<palette_builtin*> builtinVec;
+}
+
+// we have to create this dynamically because there are no guarantees
+// about the ordering of the creation of static objects.
+static builtinVec* builtins = NULL;
 
 #define BUF_SIZE 256
 
 /* keep the current palette's filename around */
 static char _filename[BUF_SIZE];
+
+void palette_add_builtin(palette_builtin* bp)
+{
+    if (builtins == NULL) {
+        builtins = new builtinVec();
+    }
+
+    builtins->push_back(bp);
+}
+
+int palette_get_nr_of_builtins(void)
+{
+    return builtins->size();
+}
+
+const char* palette_get_builtin_name(int n)
+{
+    return builtins->at(n)->name;
+}
+
+void palette_load_builtin(int n)
+{
+    palette_builtin* bp = builtins->at(n);
+
+    palette.clear();
+
+    for (int i = 0; i < bp->entries; i++)
+    {
+        uint8_t* c = bp->data + i * 3;
+
+        palette.push_back(RGB(c[0], c[1], c[2]));
+    }
+
+    g_assert(palette.size() != 0);
+
+    palette_size = palette.size();
+
+    _filename[0] = '\0';
+}
 
 bool palette_load(char* filename)
 {
