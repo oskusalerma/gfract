@@ -4,6 +4,7 @@
 #include <signal.h>
 #include <algorithm>
 #include <stdexcept>
+#include <vector>
 #include <unistd.h>
 #include <sys/types.h>
 #include <sys/wait.h>
@@ -55,6 +56,21 @@ struct status_info
     int z_width;
     int z_height;
 };
+
+// a simple history of the visited fractal positions
+typedef std::vector<fractal_info*> finfo_list;
+static finfo_list fhistory;
+
+// index of current location in fhistory
+static int fhistory_current_pos = -1;
+
+// get current history entry
+static const fractal_info& history_get_current();
+
+// goto to the given history position. it is ok to give invalid values,
+// in which case nothing is done.
+static void history_goto(int pos);
+
 
 /* options */
 struct options
@@ -230,6 +246,23 @@ void process_args(int argc, char** argv)
     }
 }
 
+const fractal_info& history_get_current()
+{
+    return *fhistory.at(fhistory_current_pos);
+}
+
+void history_goto(int pos)
+{
+    if ((pos < 0) || (pos >= (int)fhistory.size())) {
+        return;
+    }
+
+    img.finfo = *fhistory.at(pos);
+    fhistory_current_pos = pos;
+
+    start_rendering(&img);
+}
+
 void invert(void)
 {
     palette_invert();
@@ -360,6 +393,9 @@ void init_misc(void)
     img.raw_data = NULL;
 
     reset_fractal();
+
+    fhistory.push_back(new fractal_info(img.finfo));
+    fhistory_current_pos = 0;
 
     img.idle_id = -1;
     img.j_pre = false;
@@ -734,6 +770,11 @@ void start_rendering(image_info* img)
         gtk_widget_show(pbar);
         gtk_label_set_text(GTK_LABEL(recalc_button_label), TEXT_STOP);
         timer_start(&timing_info);
+
+        if (history_get_current() != img->finfo) {
+            fhistory.push_back(new fractal_info(img->finfo));
+            fhistory_current_pos = fhistory.size() - 1;
+        }
     }
     img->idle_id = g_idle_add((GtkFunction)idle_callback, img);
 }
@@ -1055,6 +1096,16 @@ gint key_event(GtkWidget* widget, GdkEventKey* event)
             ret = TRUE;
         }
 
+        break;
+
+    case GDK_Page_Up:
+        history_goto(fhistory_current_pos - 1);
+        ret = TRUE;
+        break;
+
+    case GDK_Page_Down:
+        history_goto(fhistory_current_pos + 1);
+        ret = TRUE;
         break;
     }
 

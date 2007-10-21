@@ -2,6 +2,7 @@
 #define __FRACTAL_TYPES_H
 
 #include <stdint.h>
+#include <string>
 #include <gtk/gtk.h>
 #include "fractal.h"
 #include "color.h"
@@ -12,8 +13,9 @@ struct julia_info
     double c_im;
 };
 
-struct fractal_info
+class fractal_info
 {
+public:
     // fractal type
     fractal_type type;
 
@@ -28,6 +30,11 @@ struct fractal_info
     union {
         julia_info julia;
     } u;
+
+    std::string to_str() const;
+
+    bool operator==(const fractal_info& rhs) const;
+    bool operator!=(const fractal_info& rhs) const;
 };
 
 struct image_info

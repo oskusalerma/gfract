@@ -9,6 +9,11 @@ struct image_info;
 std::string strf(const char* format, ...)
     __attribute__ ((format (printf, 1, 2)));
 
+/* for any number X: "str2dbl(dbl2str(X)) == X"
+   should be true. */
+std::string dbl2str(double x);
+double str2dbl(const std::string& s);
+
 void split(const std::string& str, std::vector<std::string>* vec);
 
 void set_image_info(image_info* img, int w, int h, int aa_factor);

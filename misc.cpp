@@ -43,6 +43,18 @@ void vstrf(std::string* str, const char* format, va_list ap)
     }
 }
 
+std::string dbl2str(double x)
+{
+    // 16 digits should be enough to represent all possible doubles since
+    // an IEEE-754 double has a 53-bit mantissa and log10(2**53) = 15.95.
+    return strf("%.16f", x);
+}
+
+double str2dbl(const std::string& s)
+{
+    return atof(s.c_str());
+}
+
 void split(const std::string& str, std::vector<std::string>* vec)
 {
     std::string tmp;
