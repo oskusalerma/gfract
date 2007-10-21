@@ -364,17 +364,10 @@ void init_misc(void)
     img.idle_id = -1;
     img.j_pre = false;
     img.finfo.type = MANDELBROT;
-    img.palette_ip = true;
+    img.palette_ip = false;
 
-    img.color_out.nr = 7;
+    img.color_out.nr = 1;
     img.color_out.ops[0].type = OP_ITER;
-    img.color_out.ops[1].type = OP_REAL2;
-    img.color_out.ops[2].type = OP_IMAG2;
-    img.color_out.ops[3].type = OP_PLUS;
-    img.color_out.ops[4].type = OP_NUMBER;
-    img.color_out.ops[4].value = 4.0;
-    img.color_out.ops[5].type = OP_MINUS;
-    img.color_out.ops[6].type = OP_PLUS;
 
     img.color_in.nr = 1;
     img.color_in.ops[0].type = OP_NUMBER;
