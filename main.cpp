@@ -244,11 +244,12 @@ void invert(void)
 
 void image_info_next_line(image_info* img)
 {
-    fractal_do_row(img->xmin, img->xmax,
-        fractal_calc_y(img->lines_done, img->ymax, img->xmin, img->xmax,
-            img->real_width),
-        img->real_width, img->depth, img->fr_type, img->u.julia.c_re,
-        img->u.julia.c_im, &img->color_in, &img->color_out,
+    fractal_do_row(img->finfo.xmin, img->finfo.xmax,
+        fractal_calc_y(img->lines_done, img->finfo.ymax,
+            img->finfo.xmin, img->finfo.xmax, img->real_width),
+        img->real_width, img->depth, img->finfo.type,
+        img->finfo.u.julia.c_re, img->finfo.u.julia.c_im,
+        &img->color_in, &img->color_out,
         &img->raw_data[img->lines_done * img->real_width]);
 
     img->lines_done++;
@@ -267,21 +268,21 @@ void reset_fractal_cmd(void)
 
 void reset_fractal(void)
 {
-    img.xmin = -2.21;
-    img.xmax = 1.0;
-    img.ymax = 1.2;
+    img.finfo.xmin = -2.21;
+    img.finfo.xmax = 1.0;
+    img.finfo.ymax = 1.2;
 }
 
 void switch_fractal_type(void)
 {
-    if (img.fr_type == MANDELBROT) {
+    if (img.finfo.type == MANDELBROT) {
         if (!st.julia_browsing)
             start_julia_browsing();
-    } else if (img.fr_type == JULIA) {
-        img.xmin = img.old_xmin;
-        img.xmax = img.old_xmax;
-        img.ymax = img.old_ymax;
-        img.fr_type = MANDELBROT;
+    } else if (img.finfo.type == JULIA) {
+        img.finfo.xmin = img.finfo.old_xmin;
+        img.finfo.xmax = img.finfo.old_xmax;
+        img.finfo.ymax = img.finfo.old_ymax;
+        img.finfo.type = MANDELBROT;
         start_rendering(&img);
     }
 }
@@ -362,7 +363,7 @@ void init_misc(void)
 
     img.idle_id = -1;
     img.j_pre = false;
-    img.fr_type = MANDELBROT;
+    img.finfo.type = MANDELBROT;
     img.palette_ip = true;
 
     img.color_out.nr = 7;
@@ -384,16 +385,16 @@ void init_misc(void)
     j_pre.rgb_data = NULL;
     j_pre.raw_data = NULL;
 
-    j_pre.xmin = -2.0;
-    j_pre.xmax = 1.5;
-    j_pre.ymax = 1.25;
+    j_pre.finfo.xmin = -2.0;
+    j_pre.finfo.xmax = 1.5;
+    j_pre.finfo.ymax = 1.25;
 
-    j_pre.u.julia.c_re = 0.3;
-    j_pre.u.julia.c_im = 0.6;
+    j_pre.finfo.u.julia.c_re = 0.3;
+    j_pre.finfo.u.julia.c_im = 0.6;
 
     j_pre.idle_id = -1;
     j_pre.j_pre = true;
-    j_pre.fr_type = JULIA;
+    j_pre.finfo.type = JULIA;
     j_pre.palette_ip = false;
 
     j_pre.color_out.nr = 1;
@@ -620,12 +621,12 @@ void duplicate(void)
 void get_coords(double* x, double* y)
 {
     if (y != NULL)
-        *y = img.ymax - ((img.xmax - img.xmin)/(double)img.user_width)
-            * (*y);
+        *y = img.finfo.ymax - ((img.finfo.xmax - img.finfo.xmin)/
+            (double)img.user_width) * (*y);
 
     if (x != NULL)
         *x = ((*x)/(double)img.user_width) *
-            (img.xmax - img.xmin) + img.xmin;
+            (img.finfo.xmax - img.finfo.xmin) + img.finfo.xmin;
 }
 
 void menu_add_item(GtkWidget* menu, GtkWidget* item)
@@ -826,9 +827,9 @@ void zoom_in(void)
     get_coords(&xmin, &ymax);
     get_coords(&xmax, NULL);
 
-    img.ymax = ymax;
-    img.xmin = xmin;
-    img.xmax = xmax;
+    img.finfo.ymax = ymax;
+    img.finfo.xmin = xmin;
+    img.finfo.xmax = xmax;
 
     start_rendering(&img);
 }
@@ -875,15 +876,15 @@ void zoom_out_func(GtkWidget* widget)
 {
     double ymin,half_w,half_h;
 
-    ymin = img.ymax - ((img.xmax - img.xmin)/(double)img.real_width)
-        * (double)(img.real_height-1);
+    ymin = img.finfo.ymax - ((img.finfo.xmax - img.finfo.xmin)/
+        (double)img.real_width) * (double)(img.real_height - 1);
 
-    half_w = (img.xmax-img.xmin)/2.0;
-    half_h = (img.ymax-ymin)/2.0;
+    half_w = (img.finfo.xmax-img.finfo.xmin)/2.0;
+    half_h = (img.finfo.ymax-ymin)/2.0;
 
-    img.ymax += half_h;
-    img.xmin -= half_w;
-    img.xmax += half_w;
+    img.finfo.ymax += half_h;
+    img.finfo.xmin -= half_w;
+    img.finfo.xmax += half_w;
 
     start_rendering(&img);
 }
@@ -942,21 +943,21 @@ gint button_press_event(GtkWidget* widget, GdkEventButton* event)
         draw_zoom_box();
     } else if (st.julia_browsing) {
         if (event->button == 1) {
-            img.u.julia.c_re = event->x;
-            img.u.julia.c_im = event->y;
+            img.finfo.u.julia.c_re = event->x;
+            img.finfo.u.julia.c_im = event->y;
 
-            get_coords(&img.u.julia.c_re, &img.u.julia.c_im);
+            get_coords(&img.finfo.u.julia.c_re, &img.finfo.u.julia.c_im);
             stop_julia_browsing();
 
             /* save old coordinates */
-            img.old_xmin = img.xmin;
-            img.old_xmax = img.xmax;
-            img.old_ymax = img.ymax;
+            img.finfo.old_xmin = img.finfo.xmin;
+            img.finfo.old_xmax = img.finfo.xmax;
+            img.finfo.old_ymax = img.finfo.ymax;
 
-            img.xmin = j_pre.xmin;
-            img.xmax = j_pre.xmax;
-            img.ymax = j_pre.ymax;
-            img.fr_type = JULIA;
+            img.finfo.xmin = j_pre.finfo.xmin;
+            img.finfo.xmax = j_pre.finfo.xmax;
+            img.finfo.ymax = j_pre.finfo.ymax;
+            img.finfo.type = JULIA;
 
             start_rendering(&img);
         }
@@ -986,9 +987,9 @@ gint motion_event(GtkWidget* widget, GdkEventMotion* event)
         return TRUE;
 
     if (st.julia_browsing) {
-        j_pre.u.julia.c_re = event->x;
-        j_pre.u.julia.c_im = event->y;
-        get_coords(&j_pre.u.julia.c_re, &j_pre.u.julia.c_im);
+        j_pre.finfo.u.julia.c_re = event->x;
+        j_pre.finfo.u.julia.c_im = event->y;
+        get_coords(&j_pre.finfo.u.julia.c_re, &j_pre.finfo.u.julia.c_im);
         start_rendering(&j_pre);
     } else if (st.zooming) {
         draw_zoom_box();

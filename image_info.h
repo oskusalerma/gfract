@@ -12,15 +12,29 @@ struct julia_info
     double c_im;
 };
 
+struct fractal_info
+{
+    // fractal type
+    fractal_type type;
+
+    // coordinates */
+    double xmin,xmax,ymax;
+
+    // saved mandelbrot coordinates. we need these when switching back
+    // from julia mode.
+    double old_xmin, old_xmax, old_ymax;
+
+    // different fractal types' parameters
+    union {
+        julia_info julia;
+    } u;
+};
+
 struct image_info
 {
-    /* coordinates */
-    double xmin,xmax,ymax;
-    
-    /* saved mandelbrot coordinates. we need these when switching back
-       from julia mode */
-    double old_xmin, old_xmax, old_ymax;
-    
+    // fractal info
+    fractal_info finfo;
+
     /* recursion depth */
     unsigned int depth;
 
@@ -36,10 +50,10 @@ struct image_info
 
     /* true if we're a julia preview */
     bool j_pre;
-    
+
     /* it's handy to keep this around */
     GtkWidget* drawing_area;
-    
+
     /* real size. differs from user_size if anti-aliasing is used */
     int real_width;
     int real_height;
@@ -50,20 +64,12 @@ struct image_info
 
     /* width/height ratio */
     double ratio;
-    
+
     /* anti-aliasing factor. if 1, no anti-aliasing */
     int aa_factor;
 
-    /* fractal type */
-    fractal_type fr_type;
-
     /* true if palette interpolation should be used. */
     bool palette_ip;
-    
-    /* different fractal types' parameters */
-    union {
-        julia_info julia;
-    } u;
 
     /* coloring information */
     color_ops color_out;
