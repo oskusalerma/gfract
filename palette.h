@@ -28,7 +28,7 @@ const char* palette_get_builtin_name(int n);
 // load the specified builtin palette
 void palette_load_builtin(int n);
 
-bool palette_load(char* filename);
+bool palette_load(const char* filename);
 char* palette_get_filename(void);
 void palette_apply(image_info* img, int x0, int y0, int width, int height);
 void palette_invert(void);

@@ -59,7 +59,7 @@ void palette_load_builtin(int n)
     _filename[0] = '\0';
 }
 
-bool palette_load(char* filename)
+bool palette_load(const char* filename)
 {
     int r,g,b;
     char buf[BUF_SIZE];

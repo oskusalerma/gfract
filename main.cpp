@@ -96,6 +96,8 @@ static void create_menus(GtkWidget* vbox);
 static void menu_add_item(GtkWidget* menu, GtkWidget* item);
 static GtkWidget* menu_add(GtkWidget* menu, const char* name, GCallback func,
     void* arg = NULL);
+static void menu_bar_add(GtkWidget* menu, GtkWidget* submenu,
+    const char* name);
 static void get_coords(double* x, double* y);
 static GdkRectangle horiz_intersect(GdkRectangle* a1, GdkRectangle* a2);
 static void my_fread(void* ptr, int size, FILE* fp);
@@ -332,7 +334,7 @@ void reapply_palette(void)
 
 void palette_apply_cmd(GtkWidget* w, GtkFileSelection* fs)
 {
-    if (palette_load((char*)gtk_file_selection_get_filename(fs)) == false) {
+    if (palette_load(gtk_file_selection_get_filename(fs)) == false) {
         fprintf(stderr, "Invalid palette file %s\n",
                 gtk_file_selection_get_filename(fs));
     } else {
@@ -681,7 +683,7 @@ GtkWidget* menu_add(GtkWidget* menu, const char* name, GCallback func,
     return item;
 }
 
-void menu_bar_add(GtkWidget* menu, GtkWidget* submenu, char* name)
+void menu_bar_add(GtkWidget* menu, GtkWidget* submenu, const char* name)
 {
     GtkWidget* temp = gtk_menu_item_new_with_label(name);
     gtk_widget_show(temp);
