@@ -130,6 +130,7 @@ static void do_color_dialog(void);
 void reapply_palette(void);
 static void load_palette_cmd(void);
 static void load_builtin_palette_cmd(void* arg);
+static void palette_apply_cmd(GtkWidget* w, GtkFileChooser* fc);
 
 /* palette cycling */
 static void do_pal_rot_dialog(void);
@@ -330,6 +331,19 @@ void reapply_palette(void)
     redraw_image(&img);
 }
 
+void palette_apply_cmd(GtkWidget* w, GtkFileChooser* fc)
+{
+    char* filename = gtk_file_chooser_get_filename(fc);
+
+    if (palette_load(filename) == false) {
+        fprintf(stderr, "Invalid palette file '%s'\n", filename);
+    } else {
+        reapply_palette();
+    }
+
+    g_free(filename);
+}
+
 void load_palette_cmd(void)
 {
     GtkWidget* dlg;
@@ -345,22 +359,13 @@ void load_palette_cmd(void)
             palette_get_filename());
     }
 
-    // TODO: Experiment with gtk_file_chooser_set_extra_widget to see if
-    // we can get the old "Apply" button back that applies a palette
-    // without closing the dialog. Even better would be opening all the
-    // palettes, showing them (graphically) in a custom dialog, and
-    // allowing changing between them simply by clicking on them.
+    GtkWidget* apply = gtk_button_new_with_label("Apply palette");
+    gtk_file_chooser_set_extra_widget(GTK_FILE_CHOOSER(dlg), apply);
+    g_signal_connect(GTK_OBJECT(apply), "clicked",
+        GTK_SIGNAL_FUNC(palette_apply_cmd), GTK_FILE_CHOOSER(dlg));
 
     if (gtk_dialog_run(GTK_DIALOG(dlg)) == GTK_RESPONSE_ACCEPT) {
-        char* filename = gtk_file_chooser_get_filename(GTK_FILE_CHOOSER(dlg));
-
-        if (palette_load(filename) == false) {
-            fprintf(stderr, "Invalid palette file '%s'\n", filename);
-        } else {
-            reapply_palette();
-        }
-
-        g_free(filename);
+        palette_apply_cmd(NULL, GTK_FILE_CHOOSER(dlg));
     }
 
     gtk_widget_destroy(dlg);
