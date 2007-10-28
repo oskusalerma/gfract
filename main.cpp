@@ -292,7 +292,7 @@ void image_info_next_line(image_info* img)
 
 void save_cmd(void)
 {
-    do_png_save(&img);
+    do_png_save(&img, window);
 }
 
 void reset_fractal_cmd(void)
@@ -1175,7 +1175,7 @@ int find_palette_by_name(const std::string& name)
     throw std::invalid_argument("can't find palette " + name);
 }
 
-int main (int argc, char** argv)
+int main(int argc, char** argv)
 {
     GtkWidget* vbox;
     GtkWidget* hbox;
