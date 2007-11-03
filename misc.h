@@ -16,6 +16,19 @@ double str2dbl(const std::string& s);
 
 void split(const std::string& str, std::vector<std::string>* vec);
 
+/* Report a failed assertion, and die. */
+void gf_report_assert_failure(const char* expr, const char* file, int line);
+
+/* Same as assert, except the expression is always evaluated. */
+#define gf_a(EXPR) \
+do \
+{ \
+    if (!(EXPR)) \
+    { \
+        gf_report_assert_failure(#EXPR, __FILE__, __LINE__); \
+    } \
+} while (0)
+
 void set_image_info(image_info* img, int w, int h, int aa_factor);
 void clear_image(image_info* img, bool raw, bool rgb);
 void rgb_invert(image_info* img);

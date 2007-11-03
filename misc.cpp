@@ -1,5 +1,6 @@
 #include <stdarg.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include "externs.h"
 #include "image_info.h"
 #include "misc.h"
@@ -53,6 +54,14 @@ std::string dbl2str(double x)
 double str2dbl(const std::string& s)
 {
     return atof(s.c_str());
+}
+
+void gf_report_assert_failure(const char* expr, const char* file, int line)
+{
+    fprintf(stderr, "Assertion failure in file '%s', line %d\n", file, line);
+    fprintf(stderr, " Failing code: %s\n", expr);
+
+    abort();
 }
 
 void split(const std::string& str, std::vector<std::string>* vec)
