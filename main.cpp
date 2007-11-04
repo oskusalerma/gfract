@@ -41,8 +41,6 @@
 #define JPRE_SIZE    160
 #define JPRE_AAFACTOR 2
 
-#define DUMP_COMMAND "--read-dump-from"
-
 struct status_info
 {
     int zooming;
@@ -100,8 +98,6 @@ static void menu_bar_add(GtkWidget* menu, GtkWidget* submenu,
     const char* name);
 static void get_coords(double* x, double* y);
 static GdkRectangle horiz_intersect(GdkRectangle* a1, GdkRectangle* a2);
-static void my_fread(void* ptr, int size, FILE* fp);
-static void my_fwrite(void* ptr, int size, FILE* fp);
 static GtkWidget* create_pixmap(GtkWidget* widget, char** xpm_data);
 
 static gint expose_event(GtkWidget* widget, GdkEventExpose* event,
@@ -169,23 +165,6 @@ static color_dialog* color_dlg = NULL;
 static palette_rotation_dialog* pal_rot_dlg = NULL;
 
 
-
-void my_fread(void* ptr, int size, FILE* fp)
-{
-    if (fread(ptr, size, 1, fp) != 1) {
-        perror("Can't read file");
-        exit(1);
-    }
-}
-
-void my_fwrite(void* ptr, int size, FILE* fp)
-{
-    if (fwrite(ptr, size, 1, fp) != 1) {
-        perror("Can't write to file");
-        exit(1);
-    }
-}
-
 void print_version(void)
 {
     printf("gfract %s\n", VERSION);
@@ -214,31 +193,6 @@ void process_args(int argc, char** argv)
         } else if (strcmp("--version", argv[i]) == 0) {
             print_version();
             exit(0);
-        } else if (strcmp(DUMP_COMMAND, argv[i]) == 0) {
-            if ((i+1) == argc) {
-                fprintf(stderr, "Filename missing from command line.\n");
-                exit(1);
-            } else {
-                FILE* fp = fopen(argv[i+1], "r");
-                if (fp == NULL) {
-                    perror("Can't open file");
-                    exit(1);
-                }
-                my_fread(&img, sizeof(image_info), fp);
-                my_fread(&palette_size, sizeof(palette_size), fp);
-                palette.resize(palette_size);
-                my_fread(&palette[0], palette_size * 4, fp);
-                fclose(fp);
-
-                if (remove(argv[i+1]) == -1) {
-                    perror("Can't delete temp file");
-                    exit(1);
-                }
-                img.io_id = -1;
-                img.rgb_data = NULL;
-                img.raw_data = NULL;
-                i++;
-            }
         } else {
             fprintf(stderr, "Unknown option: %s\n", argv[i]);
             exit(1);
@@ -551,49 +505,6 @@ gint child_reaper(gpointer nothing)
     return TRUE;
 }
 
-void duplicate(void)
-{
-    char fname[] = "/tmp/gfractXXXXXX";
-    int fd;
-    FILE* fp;
-    pid_t result;
-
-    fd = mkstemp(fname);
-    if (fd == -1) {
-        perror("Can't create temp file");
-        exit(1);
-    }
-
-    fp = fdopen(fd, "w+");
-    if (fp == NULL) {
-        perror("Can't create temp file");
-        exit(1);
-    }
-
-    my_fwrite(&img, sizeof(image_info), fp);
-    my_fwrite(&palette_size, sizeof(palette_size), fp);
-    my_fwrite(&palette[0], palette_size * 4, fp);
-
-    if (fclose(fp) != 0) {
-        perror("Error writing temp file");
-        exit(1);
-    }
-
-    result = fork();
-
-    if (result == 0) {
-        close(ConnectionNumber(gdk_display));
-        execl(program_name, program_name, DUMP_COMMAND,
-              fname, NULL);
-        perror("Error while exec'ing program");
-        exit(1);
-    }
-    else if (result < 0) {
-        perror("Could not fork");
-        exit(1);
-    }
-}
-
 void get_coords(double* x, double* y)
 {
     if (y != NULL)
@@ -651,8 +562,6 @@ void create_menus(GtkWidget* vbox)
     menu_add(menu, "Reset fractal", reset_fractal_cmd);
     menu_add(menu, NULL, NULL);
     menu_add(menu, "Save as PNG", save_cmd);
-    menu_add(menu, NULL, NULL);
-    menu_add(menu, "Duplicate", duplicate);
     menu_add(menu, NULL, NULL);
     menu_add(menu, "Exit", quit);
     menu_bar_add(menu_bar, menu, "File");
