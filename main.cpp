@@ -3,6 +3,7 @@
 #include <string.h>
 #include <signal.h>
 #include <algorithm>
+#include <map>
 #include <stdexcept>
 #include <vector>
 #include <unistd.h>
@@ -11,6 +12,7 @@
 #include <time.h>
 #include <gdk/gdkkeysyms.h>
 #include <gdk/gdkx.h>
+#include "RenderThread.h"
 #include "attr_dlg.h"
 #include "color_dlg.h"
 #include "externs.h"
@@ -28,10 +30,6 @@
 
 /* percentage of image width that zoom box starts at */
 #define ZOOM_BOX_WIDTH 0.35
-
-#define DEFAULT_WIDTH    800
-#define DEFAULT_HEIGHT   600
-#define DEFAULT_AAFACTOR 1
 
 #define MIN_WINDOW_WIDTH 320
 
@@ -79,7 +77,8 @@ struct options
     int timing;
 };
 
-static gint idle_callback(image_info* img);
+static gboolean io_callback(GIOChannel* source, GIOCondition condition,
+    gpointer data);
 static void start_rendering(image_info* img);
 static void stop_rendering(image_info* img);
 static void start_julia_browsing(void);
@@ -93,6 +92,7 @@ static int find_palette_by_name(const std::string& name);
 static void quit(void);
 static void redraw_image(image_info* img);
 static void create_menus(GtkWidget* vbox);
+static void create_threads(image_info* img);
 static void menu_add_item(GtkWidget* menu, GtkWidget* item);
 static GtkWidget* menu_add(GtkWidget* menu, const char* name, GCallback func,
     void* arg = NULL);
@@ -140,7 +140,6 @@ static void save_cmd(void);
 
 /* reset fractal position */
 static void reset_fractal_cmd(void);
-static void reset_fractal(void);
 
 
 /* general stuff we need to have */
@@ -235,7 +234,7 @@ void process_args(int argc, char** argv)
                     perror("Can't delete temp file");
                     exit(1);
                 }
-                img.idle_id = -1;
+                img.io_id = -1;
                 img.rgb_data = NULL;
                 img.raw_data = NULL;
                 i++;
@@ -276,19 +275,6 @@ void invert(void)
     redraw_image(&img);
 }
 
-void image_info_next_line(image_info* img)
-{
-    fractal_do_row(img->finfo.xmin, img->finfo.xmax,
-        fractal_calc_y(img->lines_done, img->finfo.ymax,
-            img->finfo.xmin, img->finfo.xmax, img->real_width),
-        img->real_width, img->depth, img->finfo.type,
-        img->finfo.u.julia.c_re, img->finfo.u.julia.c_im,
-        &img->color_in, &img->color_out,
-        &img->raw_data[img->lines_done * img->real_width]);
-
-    img->lines_done++;
-}
-
 void save_cmd(void)
 {
     do_png_save(&img, window);
@@ -296,15 +282,11 @@ void save_cmd(void)
 
 void reset_fractal_cmd(void)
 {
-    reset_fractal();
-    start_rendering(&img);
-}
+    stop_rendering(&img);
 
-void reset_fractal(void)
-{
-    img.finfo.xmin = -2.21;
-    img.finfo.xmax = 1.0;
-    img.finfo.ymax = 1.2;
+    img.resetPosition();
+
+    start_rendering(&img);
 }
 
 void switch_fractal_type(void)
@@ -381,36 +363,13 @@ void load_builtin_palette_cmd(void* arg)
 
 void init_misc(void)
 {
-    /* main window init */
-    img.real_width = img.user_width = DEFAULT_WIDTH;
-    img.real_height = img.user_height = DEFAULT_HEIGHT;
-    img.aa_factor = DEFAULT_AAFACTOR;
-
-    img.depth = 300;
-    img.rgb_data = NULL;
-    img.raw_data = NULL;
-
-    reset_fractal();
+    // FIXME: ignore sigpipe
 
     fhistory.push_back(new fractal_info(img.finfo));
     fhistory_current_pos = 0;
 
-    img.idle_id = -1;
-    img.j_pre = false;
-    img.finfo.type = MANDELBROT;
-    img.palette_ip = false;
-
-    img.color_out.nr = 1;
-    img.color_out.ops[0].type = OP_ITER;
-
-    img.color_in.nr = 1;
-    img.color_in.ops[0].type = OP_NUMBER;
-    img.color_in.ops[0].value = 0.0;
-
     /* init preview */
     j_pre.depth = 300;
-    j_pre.rgb_data = NULL;
-    j_pre.raw_data = NULL;
 
     j_pre.finfo.xmin = -2.0;
     j_pre.finfo.xmax = 1.5;
@@ -419,17 +378,8 @@ void init_misc(void)
     j_pre.finfo.u.julia.c_re = 0.3;
     j_pre.finfo.u.julia.c_im = 0.6;
 
-    j_pre.idle_id = -1;
     j_pre.j_pre = true;
     j_pre.finfo.type = JULIA;
-    j_pre.palette_ip = false;
-
-    j_pre.color_out.nr = 1;
-    j_pre.color_out.ops[0].type = OP_ITER;
-
-    j_pre.color_in.nr = 1;
-    j_pre.color_in.ops[0].type = OP_NUMBER;
-    j_pre.color_in.ops[0].value = 0.0;
 
     /* misc init */
     st.zooming = false;
@@ -507,23 +457,27 @@ void image_attr_ok_cmd(GtkWidget* w, image_attr_dialog* dl)
 
 void image_attr_apply_cmd(GtkWidget* w, image_attr_dialog* dl)
 {
-    set_image_info(&img,
-           gtk_spin_button_get_value_as_int(GTK_SPIN_BUTTON(dl->width)),
-           gtk_spin_button_get_value_as_int(GTK_SPIN_BUTTON(dl->height)),
-           gtk_spin_button_get_value_as_int(GTK_SPIN_BUTTON(dl->aa)));
+    stop_rendering(&img);
+
+    img.setSize(
+        gtk_spin_button_get_value_as_int(GTK_SPIN_BUTTON(dl->width)),
+        gtk_spin_button_get_value_as_int(GTK_SPIN_BUTTON(dl->height)),
+        gtk_spin_button_get_value_as_int(GTK_SPIN_BUTTON(dl->aa)));
 
     if (img.user_width < MIN_WINDOW_WIDTH) {
         /* limit minimum window width to MIN_WINDOW_WIDTH and handle
            this case in the expose event */
         gtk_widget_set_size_request(drawing_area,
                               MIN_WINDOW_WIDTH, img.user_height);
-    } else
+    } else {
         gtk_widget_set_size_request(drawing_area,
                               img.user_width, img.user_height);
+    }
 
     start_rendering(&img);
 
     resize_preview();
+
     if (st.julia_browsing) {
         gtk_widget_hide(j_pre_window);
         gtk_widget_show(j_pre_window);
@@ -534,18 +488,13 @@ void image_attr_apply_cmd(GtkWidget* w, image_attr_dialog* dl)
 void main_refresh(void)
 {
     start_rendering(&img);
-
-    resize_preview();
-    if (st.julia_browsing) {
-        gtk_widget_hide(j_pre_window);
-        gtk_widget_show(j_pre_window);
-        start_rendering(&j_pre);
-    }
 }
 
 /* change preview window to reflect possible new aspect ratio */
 void resize_preview(void)
 {
+    stop_rendering(&j_pre);
+
     int xw,yw;
 
     if (JPRE_SIZE/img.ratio < JPRE_SIZE) {
@@ -561,7 +510,7 @@ void resize_preview(void)
         yw = JPRE_SIZE;
     }
 
-    set_image_info(&j_pre, xw, yw, JPRE_AAFACTOR);
+    j_pre.setSize(xw, yw, JPRE_AAFACTOR);
     gtk_widget_set_size_request(j_pre.drawing_area, xw, yw);
 }
 
@@ -747,17 +696,58 @@ GtkWidget* create_pixmap(GtkWidget* widget, char** xpm_data)
     pixmap = gdk_pixmap_create_from_xpm_d(widget->window, &mask,
              &(gtk_widget_get_style(widget)->bg[GTK_STATE_NORMAL]),
              (gchar**)xpm_data);
-    g_assert(pixmap != NULL);
+    gf_a(pixmap != NULL);
     pwid = gtk_image_new_from_pixmap(pixmap, mask);
     gtk_widget_show(pwid);
 
     return pwid;
 }
 
+void create_threads(image_info* img)
+{
+    if (img->io_id == -1)
+    {
+        int fd[2];
+
+        gf_a(pipe(fd) == 0);
+
+        img->readFd = fd[0];
+        img->writeFd = fd[1];
+
+        img->ioc = g_io_channel_unix_new(img->readFd);
+        gf_a(g_io_channel_set_encoding(img->ioc, NULL, NULL) ==
+            G_IO_STATUS_NORMAL);
+
+        img->io_id = g_io_add_watch(img->ioc,
+            (GIOCondition)(G_IO_IN | G_IO_HUP), io_callback, img);
+
+        // FIXME: user needs to be able to specify number of threads to
+        // use in some config window, and this needs to be saved to
+        // ~/.gfract. also, thread creation/deletion needs to be fleshed
+        // out so the number can be changed dynamically at runtime.
+
+        int nr_of_threads = img == &j_pre ? 1 : 2;
+
+        for (int i = 0; i < nr_of_threads; i++)
+        {
+            // FIXME: avoid leaking the memory for RenderThread (not a big
+            // deal as long as we don't dynamically create/delete threads)
+            img->threads.push_back(Thread(new RenderThread(img)));
+        }
+    }
+
+    for (int i = 0; i < img->real_height; i++)
+    {
+        img->wq.add(new RowWorkItem(i));
+        img->lines_posted++;
+    }
+}
+
 void start_rendering(image_info* img)
 {
-    img->lines_done = 0;
     stop_rendering(img);
+
+    img->render_in_progress = true;
 
     if (!img->j_pre) {
         gtk_spin_button_update(GTK_SPIN_BUTTON(depth_spin));
@@ -774,22 +764,43 @@ void start_rendering(image_info* img)
             fhistory_current_pos = fhistory.size() - 1;
         }
     }
-    img->idle_id = g_idle_add((GtkFunction)idle_callback, img);
+
+    create_threads(img);
 }
 
 void stop_rendering(image_info* img)
 {
-    if (img->idle_id != -1) {
+    if (img->render_in_progress && !img->stop_in_progress) {
+        img->stop_in_progress = true;
+
+        img->lines_posted -= img->wq.removeAll();
+
+        gf_a(img->lines_posted >= img->lines_done);
+
+        while (img->lines_done != img->lines_posted)
+        {
+            io_callback(img->ioc, G_IO_IN, img);
+        }
+
         timer_stop(&timing_info);
+
         if (opts.timing && (img->lines_done == img->real_height))
+        {
             printf("Image rendering took %.3f seconds.\n",
                    timer_get_elapsed(&timing_info) / (double)1e6);
-        g_source_remove(img->idle_id);
-        img->idle_id = -1;
+        }
+
         if (!img->j_pre) {
             gtk_widget_hide(pbar);
             gtk_label_set_text(GTK_LABEL(recalc_button_label), TEXT_RECALC);
         }
+
+        img->render_in_progress = false;
+        img->stop_in_progress = false;
+
+        img->lines_done = 0;
+        img->lines_posted = 0;
+        img->clearLinesDone();
     }
 }
 
@@ -923,7 +934,7 @@ void zoom_out_func(GtkWidget* widget)
 
 void recalc_button(GtkWidget* widget)
 {
-    if (img.idle_id == -1)
+    if (!img.render_in_progress)
         start_rendering(&img);
     else
         stop_rendering(&img);
@@ -1110,32 +1121,71 @@ gint key_event(GtkWidget* widget, GdkEventKey* event)
     return ret;
 }
 
-gint idle_callback(image_info* img)
+gboolean io_callback(GIOChannel* source, GIOCondition condition, gpointer data)
 {
-    int y_offset;
+    image_info* img = reinterpret_cast<image_info*>(data);
+    char tmpCh;
 
-    if (img->aa_factor == 1) {
-        image_info_next_line(img);
-        palette_apply(img, 0, img->lines_done-1, img->real_width, 1);
-    } else {
-        int i;
+    gf_a(condition == G_IO_IN);
+    gf_a(read(img->readFd, &tmpCh, 1) == 1);
 
-        for (i=0; i < img->aa_factor; i++)
-            image_info_next_line(img);
-        do_anti_aliasing(img, 0, img->lines_done/img->aa_factor-1,
-                         img->user_width, 1);
+    int rowsDone = 0;
+
+    while (1)
+    {
+        int row = -1;
+
+        {
+            Locker l(&img->rows_completed_mutex);
+
+            if (img->rows_completed.empty())
+            {
+                break;
+            }
+
+            row = img->rows_completed.front();
+            img->rows_completed.pop_front();
+        }
+
+        gf_a(row >= 0);
+        gf_a(row < img->real_height);
+        gf_a(!img->lines_done_vec.at(row));
+
+        img->lines_done++;
+        img->lines_done_vec.at(row) = true;
+
+        rowsDone++;
+
+        if (img->aa_factor > 1) {
+            int userRow = row / img->aa_factor;
+
+            if (img->isAALineComplete(userRow))
+            {
+                do_anti_aliasing(img, 0, userRow, img->user_width, 1);
+
+                // to get the correct expose below
+                row = userRow;
+            }
+            else
+            {
+                continue;
+            }
+        }
+
+        GdkRectangle rect;
+
+        rect.x = 0;
+        rect.width = img->user_width;
+        rect.y = row;
+        rect.height = 1;
+
+        gdk_window_invalidate_rect(img->drawing_area->window, &rect, TRUE);
     }
 
-    y_offset = img->lines_done/img->aa_factor-1;
-
-    GdkRectangle rect;
-
-    rect.x = 0;
-    rect.width = img->user_width;
-    rect.y = y_offset;
-    rect.height = 1;
-
-    gdk_window_invalidate_rect(img->drawing_area->window, &rect, TRUE);
+    if (rowsDone == 0)
+    {
+        return TRUE;
+    }
 
     if (!img->j_pre)
     {
@@ -1146,18 +1196,20 @@ gint idle_callback(image_info* img)
     if (img->lines_done == img->real_height)
     {
         stop_rendering(img);
+    }
 
-        return FALSE;
-    }
-    else
-    {
-        return TRUE;
-    }
+    return TRUE;
 }
 
 void quit(void)
 {
-  gtk_main_quit();
+    stop_rendering(&img);
+    stop_rendering(&j_pre);
+
+    img.stopThreads();
+    j_pre.stopThreads();
+
+    gtk_main_quit();
 }
 
 int find_palette_by_name(const std::string& name)
@@ -1180,6 +1232,7 @@ int main(int argc, char** argv)
     GtkObject* adj;
 
     program_name = argv[0];
+
     gtk_init(&argc, &argv);
 
     palette_load_builtin(find_palette_by_name("blues"));
@@ -1187,9 +1240,9 @@ int main(int argc, char** argv)
     init_misc();
     process_args(argc, argv);
     g_timeout_add(10*1000, child_reaper, NULL);
-    set_image_info(&img, img.user_width, img.user_height, img.aa_factor);
-    set_image_info(&j_pre, JPRE_SIZE, int(JPRE_SIZE/img.ratio),
-        JPRE_AAFACTOR);
+
+    img.setSize(img.user_width, img.user_height, img.aa_factor);
+    j_pre.setSize(JPRE_SIZE, int(JPRE_SIZE / img.ratio), JPRE_AAFACTOR);
 
     /* main window */
     window = gtk_window_new(GTK_WINDOW_TOPLEVEL);
@@ -1210,7 +1263,7 @@ int main(int argc, char** argv)
     create_menus(vbox);
 
     g_signal_connect (GTK_OBJECT (window), "destroy",
-                        GTK_SIGNAL_FUNC (quit), NULL);
+        GTK_SIGNAL_FUNC(quit), NULL);
 
     /* toolbar stuff */
     hbox = gtk_hbox_new(FALSE, 5);

@@ -97,51 +97,6 @@ void split(const std::string& str, std::vector<std::string>* vec)
     }
 }
 
-void set_image_info(image_info* img, int w, int h, int aa_factor)
-{
-    bool same_size;
-
-    same_size = (img->user_width == w) && (img->user_height == h)
-        && (img->rgb_data != NULL);
-
-    if (!same_size)
-        delete[] img->rgb_data;
-    delete[] img->raw_data;
-
-    img->user_width = w;
-    img->user_height = h;
-    img->aa_factor = aa_factor;
-    img->ratio = (double)w/h;
-
-    if (aa_factor < 1) {
-        fprintf(stderr, "aa_factor must be >= 1\n");
-        gtk_main_quit();
-    }
-
-    img->real_width = w*aa_factor;
-    img->real_height = h*aa_factor;
-
-    if (!same_size)
-        img->rgb_data = new uint32_t[img->user_width*img->user_height];
-    img->raw_data = new double[img->real_width*img->real_height];
-
-    clear_image(img, true, !same_size);
-}
-
-void clear_image(image_info* img, bool raw, bool rgb)
-{
-    int i;
-
-    if (raw) {
-        for (i=0; i < img->real_width*img->real_height; i++)
-            img->raw_data[i] = 0.0;
-    }
-    if (rgb) {
-        for (i=0; i < img->user_width*img->user_height; i++)
-            img->rgb_data[i] = palette[0];
-    }
-}
-
 void do_aa_pixel(image_info* img, int x, int y)
 {
     int yoff,xoff;

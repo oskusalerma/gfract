@@ -29,8 +29,21 @@ do \
     } \
 } while (0)
 
-void set_image_info(image_info* img, int w, int h, int aa_factor);
-void clear_image(image_info* img, bool raw, bool rgb);
+
+/* Clear an STL container containing pointers, calling delete on all items
+in the process. */
+template<class T> void clearContainer(T* container)
+{
+    typename T::iterator it;
+
+    for (it = container->begin(); it != container->end(); ++it)
+    {
+        delete *it;
+    }
+
+    container->clear();
+}
+
 void rgb_invert(image_info* img);
 void do_anti_aliasing(image_info* img, int x0, int y0, int width,
                       int height);

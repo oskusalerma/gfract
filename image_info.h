@@ -3,9 +3,14 @@
 
 #include <stdint.h>
 #include <string>
+#include <list>
 #include <gtk/gtk.h>
-#include "fractal.h"
+#include "Mutex.h"
+#include "Thread.h"
+#include "WorkQueue.h"
 #include "color.h"
+#include "fractal.h"
+#include "misc.h"
 
 struct julia_info
 {
@@ -39,17 +44,43 @@ public:
 
 struct image_info
 {
+    image_info();
+
+    enum {
+        DEFAULT_WIDTH = 800,
+        DEFAULT_HEIGHT = 600,
+        DEFAULT_AAFACTOR = 1
+    };
+
+    // reset to default Mandelbrot position
+    void resetPosition();
+
+    // allocate memory for an image of the given size
+    void setSize(int w, int h, int aaFactor);
+
+    // clear the given memory buffers (set them to 0 / 0.0)
+    void clear(bool raw, bool rgb);
+
+    // clear the lines_done_vec array (set all to false)
+    void clearLinesDone();
+
+    // returns true if all the lines needed to AA the given row are rendered
+    bool isAALineComplete(int row);
+
+    // stop all background threads (and wait for them to stop)
+    void stopThreads();
+
+    // are we currently rendering this fractal
+    bool render_in_progress;
+
+    // are we currently stopping rendering
+    bool stop_in_progress;
+
     // fractal info
     fractal_info finfo;
 
     /* recursion depth */
     unsigned int depth;
-
-    /* lines done */
-    int lines_done;
-
-    /* our idle callback function id */
-    int idle_id;
 
     /* actual data pointers */
     double* raw_data;
@@ -81,9 +112,82 @@ struct image_info
     /* coloring information */
     color_ops color_out;
     color_ops color_in;
+
+
+
+    /* our I/O callback id */
+    int io_id;
+
+    // threading stuff
+    GIOChannel* ioc;
+    int readFd;
+    int writeFd;
+
+    void signalRowCompleted(int row);
+
+    // render threads post completed row numbers to this
+    std::list<int> rows_completed;
+
+    // protects the above list
+    Mutex rows_completed_mutex;
+
+    // used to post render tasks for threads to do
+    WorkQueue wq;
+
+    // how many lines to render have been posted on the work queue
+    int lines_posted;
+
+    // lines done
+    int lines_done;
+
+    // true for a given line if that is rendered. size is always
+    // real_height. NOTE: this is a char, not a bool, because of the
+    // stupidity of std::vector<bool> in the C++ standard (it does not
+    // actually store bools and is slower).
+    std::vector<char> lines_done_vec;
+
+    // render threads
+    typedef std::list<Thread> threads_t;
+    threads_t threads;
 };
 
-/* Calculate next line of image. */
-void image_info_next_line(image_info* img);
+/** An order to render a single row. */
+class RowWorkItem : public WorkItem
+{
+public:
+    RowWorkItem(int row)
+    {
+        gf_a(row >= 0);
+
+        this->row = row;
+    }
+
+    int row;
+};
+
+/** An order to render a range of rows (not used yet). */
+class RowRangeWorkItem : public WorkItem
+{
+public:
+    RowRangeWorkItem(int startRow, int endRow)
+    {
+        gf_a(startRow >= 0);
+        gf_a(endRow >= 0);
+        gf_a(startRow <= endRow);
+
+        this->startRow = startRow;
+        this->endRow = endRow;
+    }
+
+    int startRow;
+    int endRow;
+};
+
+/** An order for the thread receiving it to quit. */
+class QuitWorkItem : public WorkItem
+{
+public:
+    QuitWorkItem() { }
+};
 
 #endif
