@@ -293,8 +293,8 @@ void palette_apply_cmd(GtkWidget* w, GtkFileChooser* fc)
 {
     char* filename = gtk_file_chooser_get_filename(fc);
 
-    if (palette_load(filename) == false) {
-        fprintf(stderr, "Invalid palette file '%s'\n", filename);
+    if (!palette_load(filename)) {
+        show_msg_box(window, strf("Invalid palette file '%s'\n", filename));
     } else {
         reapply_palette();
     }
@@ -1218,15 +1218,8 @@ void save_config()
     }
     catch (const GfractException& e)
     {
-        GtkWidget* dlg = gtk_message_dialog_new(GTK_WINDOW(window),
-            GtkDialogFlags(0),
-            GTK_MESSAGE_ERROR,
-            GTK_BUTTONS_OK,
-            "Error saving config file '%s': %s",
-            cfgFilename.c_str(), e.what());
-
-        gtk_dialog_run(GTK_DIALOG(dlg));
-        gtk_widget_destroy(dlg);
+        show_msg_box(window, strf("Error saving config file '%s': %s",
+                         cfgFilename.c_str(), e.what()));
     }
 }
 
@@ -1284,15 +1277,8 @@ void load_config()
     }
     catch (const GfractException& e)
     {
-        GtkWidget* dlg = gtk_message_dialog_new(NULL,
-            GtkDialogFlags(0),
-            GTK_MESSAGE_ERROR,
-            GTK_BUTTONS_OK,
-            "Error loading config file '%s': %s",
-            cfgFilename.c_str(), e.what());
-
-        gtk_dialog_run(GTK_DIALOG(dlg));
-        gtk_widget_destroy(dlg);
+        show_msg_box(NULL, strf("Error loading config file '%s': %s",
+                         cfgFilename.c_str(), e.what()));
     }
 }
 

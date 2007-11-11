@@ -23,8 +23,8 @@ void Config::loadFromFile(const std::string& filename)
 
     if (!fp)
     {
-        throw GfractException("Can't open file '" + filename + "': " +
-            strerror(errno));
+        throw GfractException(strf("Can't open file '%s': %s",
+                                  filename.c_str(), strerror(errno)));
     }
 
     gf_a(fseek(fp, 0, SEEK_END) == 0);
@@ -80,8 +80,8 @@ void Config::saveToFile(const std::string& filename)
     return;
 
 err:
-    throw GfractException("Can't write file '" + filename + "': " +
-        strerror(errno));
+    throw GfractException(strf("Can't write file '%s': %s",
+                              filename.c_str(), strerror(errno)));
 }
 
 void Config::loadFromMemory(const std::string& str)
@@ -116,8 +116,8 @@ void Config::loadFromMemory(const std::string& str)
         {
             if (!section)
             {
-                throw GfractException("line " +
-                    lexical_cast<std::string>(lineNr) + ": no active section");
+                throw GfractException(strf("line %d: no active section",
+                                          lineNr));
             }
 
             section->setStr(matches[1], matches[2]);
@@ -130,8 +130,7 @@ void Config::loadFromMemory(const std::string& str)
         }
         else
         {
-            throw GfractException("line " +
-                lexical_cast<std::string>(lineNr) + ": unknown syntax");
+            throw GfractException(strf("line %d: unknown syntax", lineNr));
         }
     }
 
@@ -196,8 +195,10 @@ int Config::getInt(const std::string& section, const std::string& key,
         }
         catch (boost::bad_lexical_cast& e)
         {
-            throw GfractException("Invalid integer value '" + res + "' for" +
-                " config key " + section + "/" + key);
+            throw GfractException(strf("Invalid integer value '%s' for"
+                                      " config key %s/%s",
+                                      res.c_str(), section.c_str(),
+                                      key.c_str()));
         }
     }
     else
@@ -243,8 +244,8 @@ std::string Config::getStr(const std::string& section, const std::string& key,
     }
     else
     {
-        throw GfractException("Config value '" + section + "/" + key +
-            "' not found");
+        throw GfractException(strf("Config value '%s/%s' not found",
+                                  section.c_str(), key.c_str()));
     }
 }
 
