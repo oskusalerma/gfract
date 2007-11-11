@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <signal.h>
+#include <time.h>
 #include <algorithm>
 #include <map>
 #include <stdexcept>
@@ -9,9 +10,11 @@
 #include <unistd.h>
 #include <sys/types.h>
 #include <sys/wait.h>
-#include <time.h>
+#include <boost/filesystem/operations.hpp>
 #include <gdk/gdkkeysyms.h>
 #include <gdk/gdkx.h>
+#include "Config.h"
+#include "Exception.h"
 #include "RenderThread.h"
 #include "attr_dlg.h"
 #include "color_dlg.h"
@@ -41,6 +44,9 @@
 #define JPRE_SIZE    160
 #define JPRE_AAFACTOR 2
 
+// config section names
+static const std::string sectionMisc("misc");
+
 struct status_info
 {
     int zooming;
@@ -52,6 +58,12 @@ struct status_info
     int z_width;
     int z_height;
 };
+
+static std::string cfgFilename;
+
+// we have a timeout every 10 seconds that checks whether the config has
+// been updated and needs saving.
+static bool cfgNeedsSaving = false;
 
 // a simple history of the visited fractal positions
 typedef std::vector<fractal_info*> finfo_list;
@@ -106,11 +118,14 @@ static gint key_event(GtkWidget* widget, GdkEventKey* event);
 static gint button_press_event(GtkWidget* widget, GdkEventButton* event);
 static gint j_pre_delete(GtkWidget *widget, GdkEvent *event, gpointer data);
 static gint child_reaper(gpointer nothing);
+static gint cfg_saver(gpointer nothing);
 
 static void invert(void);
 static void switch_fractal_type(void);
 static void print_help(void);
 static void print_version(void);
+static void save_config();
+static void load_config();
 
 /* DIALOG FUNCTIONS */
 
@@ -155,7 +170,6 @@ static GtkWidget* palette_ip = NULL;
 static GtkWidget* pbar = NULL;
 static GtkWidget* switch_menu_cmd = NULL;
 static int zoom_timer;
-static char* program_name = NULL;
 
 
 /* DIALOG POINTERS */
@@ -437,6 +451,8 @@ void image_attr_apply_cmd(GtkWidget* w, image_attr_dialog* dl)
         gtk_widget_show(j_pre_window);
         start_rendering(&j_pre);
     }
+
+    cfgNeedsSaving = true;
 }
 
 void main_refresh(void)
@@ -660,8 +676,15 @@ void start_rendering(image_info* img)
 
     if (!img->j_pre) {
         gtk_spin_button_update(GTK_SPIN_BUTTON(depth_spin));
-        img->depth =
-            gtk_spin_button_get_value_as_int(GTK_SPIN_BUTTON(depth_spin));
+
+        unsigned depth = gtk_spin_button_get_value_as_int(
+            GTK_SPIN_BUTTON(depth_spin));
+
+        if (depth != img->depth)
+        {
+            img->depth = depth;
+            cfgNeedsSaving = true;
+        }
 
         gtk_progress_bar_set_fraction(GTK_PROGRESS_BAR(pbar), 0.0);
         gtk_widget_show(pbar);
@@ -1112,6 +1135,8 @@ gboolean io_callback(GIOChannel* source, GIOCondition condition, gpointer data)
 
 void quit(void)
 {
+    cfg_saver(NULL);
+
     stop_rendering(&img);
     stop_rendering(&j_pre);
 
@@ -1132,6 +1157,69 @@ int find_palette_by_name(const std::string& name)
     throw std::invalid_argument("can't find palette " + name);
 }
 
+gint cfg_saver(gpointer nothing)
+{
+    if (cfgNeedsSaving)
+    {
+        save_config();
+    }
+
+    return TRUE;
+}
+
+void save_config()
+{
+    try
+    {
+        Config cfg;
+        img.save(&cfg, sectionMisc);
+        cfg.saveToFile(cfgFilename);
+
+        cfgNeedsSaving = false;
+    }
+    catch (const GfractException& e)
+    {
+        GtkWidget* dlg = gtk_message_dialog_new(GTK_WINDOW(window),
+            GtkDialogFlags(0),
+            GTK_MESSAGE_ERROR,
+            GTK_BUTTONS_OK,
+            "Error saving config file '%s': %s",
+            cfgFilename.c_str(), e.what());
+
+        gtk_dialog_run(GTK_DIALOG(dlg));
+        gtk_widget_destroy(dlg);
+    }
+}
+
+void load_config()
+{
+    using namespace boost::filesystem;
+
+    if (!exists(path(cfgFilename, native)))
+    {
+        return;
+    }
+
+    try
+    {
+        Config cfg;
+        cfg.loadFromFile(cfgFilename);
+        img.load(&cfg, sectionMisc);
+    }
+    catch (const GfractException& e)
+    {
+        GtkWidget* dlg = gtk_message_dialog_new(NULL,
+            GtkDialogFlags(0),
+            GTK_MESSAGE_ERROR,
+            GTK_BUTTONS_OK,
+            "Error loading config file '%s': %s",
+            cfgFilename.c_str(), e.what());
+
+        gtk_dialog_run(GTK_DIALOG(dlg));
+        gtk_widget_destroy(dlg);
+    }
+}
+
 int main(int argc, char** argv)
 {
     GtkWidget* vbox;
@@ -1140,15 +1228,19 @@ int main(int argc, char** argv)
     GtkWidget* tmp;
     GtkObject* adj;
 
-    program_name = argv[0];
-
     gtk_init(&argc, &argv);
 
+    cfgFilename = std::string(getenv("HOME")) + "/.gfractrc";
+    load_config();
+
+    // FIXME: use palette name/filename from config
     palette_load_builtin(find_palette_by_name("blues"));
 
     init_misc();
     process_args(argc, argv);
+
     g_timeout_add(10*1000, child_reaper, NULL);
+    g_timeout_add(10*1000, cfg_saver, NULL);
 
     img.setSize(img.user_width, img.user_height, img.aa_factor);
     j_pre.setSize(JPRE_SIZE, int(JPRE_SIZE / img.ratio), JPRE_AAFACTOR);

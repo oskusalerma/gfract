@@ -1,7 +1,14 @@
 #include "image_info.h"
+#include "Config.h"
 #include "externs.h"
 #include "color.h"
 #include "misc.h"
+
+// config key names
+static const std::string keyWidth("width");
+static const std::string keyHeight("height");
+static const std::string keyDepth("depth");
+static const std::string keyAA("anti-aliasing");
 
 std::string fractal_info::to_str() const
 {
@@ -56,8 +63,8 @@ image_info::image_info()
     real_width = user_width = DEFAULT_WIDTH;
     real_height = user_height = DEFAULT_HEIGHT;
     aa_factor = DEFAULT_AAFACTOR;
+    depth = DEFAULT_DEPTH;
 
-    depth = 300;
     rgb_data = NULL;
     raw_data = NULL;
 
@@ -87,6 +94,22 @@ void image_info::resetPosition()
     finfo.xmin = -2.21;
     finfo.xmax = 1.0;
     finfo.ymax = 1.2;
+}
+
+void image_info::load(Config* cfg, const std::string& section)
+{
+    user_width = cfg->getInt(section, keyWidth, DEFAULT_WIDTH);
+    user_height = cfg->getInt(section, keyHeight, DEFAULT_HEIGHT);
+    depth = cfg->getInt(section, keyDepth, DEFAULT_DEPTH);
+    aa_factor = cfg->getInt(section, keyAA, DEFAULT_AAFACTOR);
+}
+
+void image_info::save(Config* cfg, const std::string& section)
+{
+    cfg->setInt(section, keyWidth, user_width);
+    cfg->setInt(section, keyHeight, user_height);
+    cfg->setInt(section, keyDepth, depth);
+    cfg->setInt(section, keyAA, aa_factor);
 }
 
 void image_info::signalRowCompleted(int row)

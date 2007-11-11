@@ -4,6 +4,7 @@
 #include <stdint.h>
 #include <string>
 #include <list>
+#include <boost/utility.hpp>
 #include <gtk/gtk.h>
 #include "Mutex.h"
 #include "Thread.h"
@@ -11,6 +12,8 @@
 #include "color.h"
 #include "fractal.h"
 #include "misc.h"
+
+class Config;
 
 struct julia_info
 {
@@ -42,18 +45,25 @@ public:
     bool operator!=(const fractal_info& rhs) const;
 };
 
-struct image_info
+struct image_info : boost::noncopyable
 {
     image_info();
 
     enum {
         DEFAULT_WIDTH = 800,
         DEFAULT_HEIGHT = 600,
-        DEFAULT_AAFACTOR = 1
+        DEFAULT_AAFACTOR = 1,
+        DEFAULT_DEPTH = 300
     };
 
     // reset to default Mandelbrot position
     void resetPosition();
+
+    // load config. NOTE: setSize MUST be called after this.
+    void load(Config* cfg, const std::string& section);
+
+    // save config
+    void save(Config* cfg, const std::string& section);
 
     // allocate memory for an image of the given size
     void setSize(int w, int h, int aaFactor);
