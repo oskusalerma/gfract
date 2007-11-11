@@ -49,6 +49,7 @@
 // config section/key names
 static const std::string sectionMisc("misc");
 static const std::string keyThreads("threads");
+static const std::string keyPalette("palette");
 
 struct status_info
 {
@@ -104,7 +105,7 @@ static void kill_zoom_timers(void);
 static void zoom_resize(int arg);
 static void resize_preview(void);
 static int zoom_is_valid_size(void);
-static int find_palette_by_name(const std::string& name);
+static int find_palette_by_name(const std::string& name, bool must_exist);
 static void quit(void);
 static void redraw_image(image_info* img);
 static void create_menus(GtkWidget* vbox);
@@ -114,6 +115,7 @@ static GtkWidget* menu_add(GtkWidget* menu, const char* name, GCallback func,
     void* arg = NULL);
 static void menu_bar_add(GtkWidget* menu, GtkWidget* submenu,
     const char* name);
+static void show_msg_box(GtkWidget* parent, const std::string& msg);
 static void get_coords(double* x, double* y);
 static GdkRectangle horiz_intersect(GdkRectangle* a1, GdkRectangle* a2);
 static GtkWidget* create_pixmap(GtkWidget* widget, char** xpm_data);
@@ -298,6 +300,8 @@ void palette_apply_cmd(GtkWidget* w, GtkFileChooser* fc)
     }
 
     g_free(filename);
+
+    cfgNeedsSaving = true;
 }
 
 void load_palette_cmd(void)
@@ -310,9 +314,12 @@ void load_palette_cmd(void)
         GTK_STOCK_OPEN, GTK_RESPONSE_ACCEPT,
         NULL);
 
-    if (strlen(palette_get_filename()) > 0) {
+    const std::string& palName = palette_get_current_name();
+
+    if (!palName.empty() && (palName[0] == '/'))
+    {
         gtk_file_chooser_set_filename(GTK_FILE_CHOOSER(dlg),
-            palette_get_filename());
+            palName.c_str());
     }
 
     GtkWidget* apply = gtk_button_new_with_label("Apply palette");
@@ -333,6 +340,8 @@ void load_builtin_palette_cmd(void* arg)
 
     palette_load_builtin(n);
     reapply_palette();
+
+    cfgNeedsSaving = true;
 }
 
 void init_misc(void)
@@ -421,6 +430,19 @@ gint do_palette_rotation(bool forward)
     redraw_image(&img);
 
     return TRUE;
+}
+
+void show_msg_box(GtkWidget* parent, const std::string& msg)
+{
+    GtkWidget* dlg = gtk_message_dialog_new(GTK_WINDOW(parent),
+        GtkDialogFlags(0),
+        GTK_MESSAGE_ERROR,
+        GTK_BUTTONS_OK,
+        "%s",
+        msg.c_str());
+
+    gtk_dialog_run(GTK_DIALOG(dlg));
+    gtk_widget_destroy(dlg);
 }
 
 void image_attr_ok_cmd(GtkWidget* w, image_attr_dialog* dl)
@@ -1152,7 +1174,7 @@ void quit(void)
     gtk_main_quit();
 }
 
-int find_palette_by_name(const std::string& name)
+int find_palette_by_name(const std::string& name, bool must_exist)
 {
     for (int i = 0; i < palette_get_nr_of_builtins(); i++) {
         if (name == palette_get_builtin_name(i)) {
@@ -1160,7 +1182,14 @@ int find_palette_by_name(const std::string& name)
         }
     }
 
-    throw std::invalid_argument("can't find palette " + name);
+    if (must_exist)
+    {
+        throw std::invalid_argument("can't find palette " + name);
+    }
+    else
+    {
+        return -1;
+    }
 }
 
 gint cfg_saver(gpointer nothing)
@@ -1181,6 +1210,7 @@ void save_config()
 
         img.save(&cfg, sectionMisc);
         cfg.setInt(sectionMisc, keyThreads, opts.nr_threads);
+        cfg.setStr(sectionMisc, keyPalette, palette_get_current_name());
 
         cfg.saveToFile(cfgFilename);
 
@@ -1217,6 +1247,40 @@ void load_config()
         img.load(&cfg, sectionMisc);
         opts.nr_threads = cfg.getInt(sectionMisc, keyThreads,
             DEFAULT_NR_THREADS);
+
+        std::string palName = cfg.getStr(sectionMisc, keyPalette, "");
+
+        if (!palName.empty())
+        {
+            std::string err;
+
+            if (palName[0] == '/')
+            {
+                if (!palette_load(palName.c_str()))
+                {
+                    err = "Could not load palette file " + palName;
+                }
+
+            }
+            else
+            {
+                int idx = find_palette_by_name(palName, false);
+
+                if (idx != -1)
+                {
+                    palette_load_builtin(idx);
+                }
+                else
+                {
+                    err = "Could not load built-in palette " + palName;
+                }
+            }
+
+            if (!err.empty())
+            {
+                show_msg_box(window, "Error: " + err);
+            }
+        }
     }
     catch (const GfractException& e)
     {
@@ -1240,15 +1304,16 @@ int main(int argc, char** argv)
     GtkWidget* tmp;
     GtkObject* adj;
 
+    cfgFilename = std::string(getenv("HOME")) + "/.gfractrc";
+
     gtk_init(&argc, &argv);
 
-    cfgFilename = std::string(getenv("HOME")) + "/.gfractrc";
+    init_misc();
+
+    palette_load_builtin(find_palette_by_name("blues", true));
+
     load_config();
 
-    // FIXME: use palette name/filename from config
-    palette_load_builtin(find_palette_by_name("blues"));
-
-    init_misc();
     process_args(argc, argv);
 
     g_timeout_add(10*1000, child_reaper, NULL);

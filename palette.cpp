@@ -17,8 +17,7 @@ static builtinVec* builtins = NULL;
 
 #define BUF_SIZE 256
 
-/* keep the current palette's filename around */
-static char _filename[BUF_SIZE];
+static std::string _name;
 
 void palette_add_builtin(palette_builtin* bp)
 {
@@ -56,7 +55,7 @@ void palette_load_builtin(int n)
 
     palette_size = palette.size();
 
-    _filename[0] = '\0';
+    _name = bp->name;
 }
 
 bool palette_load(const char* filename)
@@ -73,6 +72,7 @@ bool palette_load(const char* filename)
     while (fgets(buf, BUF_SIZE, fp) != NULL) {
         if (sscanf(buf, " %d %d %d", &r, &g,&b) != 3)
             break;
+
         palette.push_back(RGB(r,g,b));
     }
 
@@ -81,20 +81,20 @@ bool palette_load(const char* filename)
     if (palette.size() == 0)
     {
         palette.push_back(RGB(0, 0, 0));
+        palette_size = palette.size();
 
         return false;
     }
 
     palette_size = palette.size();
-    strncpy(_filename, filename, BUF_SIZE);
-    _filename[BUF_SIZE-1] = '\0';
+    _name = filename;
 
     return true;
 }
 
-char* palette_get_filename(void)
+const std::string& palette_get_current_name()
 {
-    return &_filename[0];
+    return _name;
 }
 
 void palette_apply(image_info* img, int x0, int y0, int width, int height)

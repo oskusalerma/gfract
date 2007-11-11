@@ -2,7 +2,9 @@
 #define __PALETTE_H
 
 #include <stdint.h>
+#include <string>
 #include <gtk/gtk.h>
+
 struct image_info;
 
 #if (G_BYTE_ORDER == G_BIG_ENDIAN)
@@ -28,8 +30,11 @@ const char* palette_get_builtin_name(int n);
 // load the specified builtin palette
 void palette_load_builtin(int n);
 
+/* get the current palette's name. if it begins with a '/', it's a
+   filename, otherwise it's a builtin name. */
+const std::string& palette_get_current_name();
+
 bool palette_load(const char* filename);
-char* palette_get_filename(void);
 void palette_apply(image_info* img, int x0, int y0, int width, int height);
 void palette_invert(void);
 void palette_rotate_backward(void);
