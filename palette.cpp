@@ -40,19 +40,20 @@ const char* palette_get_builtin_name(int n)
 
 void palette_load_builtin(int n)
 {
-    palette_builtin* bp = builtins->at(n);
+    palette_t new_pal;
 
-    palette.clear();
+    palette_builtin* bp = builtins->at(n);
 
     for (int i = 0; i < bp->entries; i++)
     {
         uint8_t* c = bp->data + i * 3;
 
-        palette.push_back(RGB(c[0], c[1], c[2]));
+        new_pal.push_back(RGB(c[0], c[1], c[2]));
     }
 
-    g_assert(palette.size() != 0);
+    g_assert(new_pal.size() != 0);
 
+    palette = new_pal;
     palette_size = palette.size();
 
     _name = bp->name;
@@ -62,30 +63,32 @@ bool palette_load(const char* filename)
 {
     int r,g,b;
     char buf[BUF_SIZE];
+    palette_t new_pal;
 
-    FILE* fp = fopen(filename, "r");
+    FILE* fp = fopen(filename, "rt");
+
     if (fp == NULL)
+    {
         return false;
-
-    palette.clear();
+    }
 
     while (fgets(buf, BUF_SIZE, fp) != NULL) {
         if (sscanf(buf, " %d %d %d", &r, &g,&b) != 3)
+        {
             break;
+        }
 
-        palette.push_back(RGB(r,g,b));
+        new_pal.push_back(RGB(r, g, b));
     }
 
-    fclose(fp);
+    gf_a(fclose(fp) == 0);
 
-    if (palette.size() == 0)
+    if (new_pal.size() == 0)
     {
-        palette.push_back(RGB(0, 0, 0));
-        palette_size = palette.size();
-
         return false;
     }
 
+    palette = new_pal;
     palette_size = palette.size();
     _name = filename;
 
