@@ -314,6 +314,9 @@ void load_palette_cmd(void)
         GTK_STOCK_OPEN, GTK_RESPONSE_ACCEPT,
         NULL);
 
+    gtk_file_chooser_add_shortcut_folder(GTK_FILE_CHOOSER(dlg),
+        "/usr/local/share/gfract/palettes", NULL);
+
     const std::string& palName = palette_get_current_name();
 
     if (!palName.empty() && (palName[0] == '/'))
