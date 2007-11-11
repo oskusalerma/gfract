@@ -14,11 +14,3 @@
 -optionally store iter/re/im for each calculated pixel, so you can tweak
  coloring without recalculating image (needs 12 bytes per pixel -> lots
  of memory needed for large AA values)
-
-POSSIBLY IN THE FUTURE:
-
--Distributed rendering
-
- -Multiple threads
-
- -Multiple machines
