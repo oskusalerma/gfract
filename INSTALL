@@ -1,6 +1,7 @@
 You need the following libraries:
 
- -GTK2
+ -Boost
+ -GTK 2.x
  -libpng
  -libz
 

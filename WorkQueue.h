@@ -2,18 +2,19 @@
 #define GFRACT_WORKQUEUE_H
 
 #include <list>
+#include <boost/utility.hpp>
 #include "CondVar.h"
 #include "Mutex.h"
 
 /** Base class for workitems. */
-class WorkItem
+class WorkItem : boost::noncopyable
 {
 public:
     virtual ~WorkItem() { }
 };
 
 /** Classic work queue. */
-class WorkQueue
+class WorkQueue : boost::noncopyable
 {
 public:
     WorkQueue();

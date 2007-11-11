@@ -1,11 +1,12 @@
 #ifndef GFRACT_CONDVAR_H
 #define GFRACT_CONDVAR_H
 
+#include <boost/utility.hpp>
 #include <pthread.h>
 
 class Mutex;
 
-class CondVar
+class CondVar : boost::noncopyable
 {
 public:
     CondVar();

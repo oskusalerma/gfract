@@ -1,11 +1,12 @@
 #ifndef GFRACT_MUTEX_H
 #define GFRACT_MUTEX_H
 
+#include <boost/utility.hpp>
 #include <pthread.h>
 
 class CondVar;
 
-class Mutex
+class Mutex : boost::noncopyable
 {
 public:
     Mutex();
@@ -15,16 +16,13 @@ public:
     void unlock();
 
 private:
-    // make it non-copyable
-    Mutex(Mutex&);
-
     pthread_mutex_t mutex;
 
     friend class CondVar;
 };
 
 // scope lock
-class Locker
+class Locker : boost::noncopyable
 {
 public:
     Locker(Mutex* mutex)
