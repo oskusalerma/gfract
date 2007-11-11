@@ -44,8 +44,11 @@
 #define JPRE_SIZE    160
 #define JPRE_AAFACTOR 2
 
-// config section names
+#define DEFAULT_NR_THREADS 2
+
+// config section/key names
 static const std::string sectionMisc("misc");
+static const std::string keyThreads("threads");
 
 struct status_info
 {
@@ -83,8 +86,11 @@ static void history_goto(int pos);
 /* options */
 struct options
 {
-    /* display amount of time needed for rendering */
+    // display amount of time needed for rendering
     int timing;
+
+    // number of background render threads to use
+    int nr_threads;
 };
 
 static gboolean io_callback(GIOChannel* source, GIOCondition condition,
@@ -354,8 +360,8 @@ void init_misc(void)
     st.julia_browsing = false;
     zoom_timer = -1;
 
-    /* default values for options */
     opts.timing = 0;
+    opts.nr_threads = DEFAULT_NR_THREADS;
 }
 
 /* returns the horizontal intersection part of a1 and a2. if the
@@ -647,11 +653,11 @@ void create_threads(image_info* img)
             (GIOCondition)(G_IO_IN | G_IO_HUP), io_callback, img);
 
         // FIXME: user needs to be able to specify number of threads to
-        // use in some config window, and this needs to be saved to
-        // ~/.gfract. also, thread creation/deletion needs to be fleshed
-        // out so the number can be changed dynamically at runtime.
+        // use in some config window. also, thread creation/deletion needs
+        // to be fleshed out so the number can be changed dynamically at
+        // runtime.
 
-        int nr_of_threads = img == &j_pre ? 1 : 2;
+        int nr_of_threads = img == &j_pre ? 1 : opts.nr_threads;
 
         for (int i = 0; i < nr_of_threads; i++)
         {
@@ -1172,7 +1178,10 @@ void save_config()
     try
     {
         Config cfg;
+
         img.save(&cfg, sectionMisc);
+        cfg.setInt(sectionMisc, keyThreads, opts.nr_threads);
+
         cfg.saveToFile(cfgFilename);
 
         cfgNeedsSaving = false;
@@ -1204,7 +1213,10 @@ void load_config()
     {
         Config cfg;
         cfg.loadFromFile(cfgFilename);
+
         img.load(&cfg, sectionMisc);
+        opts.nr_threads = cfg.getInt(sectionMisc, keyThreads,
+            DEFAULT_NR_THREADS);
     }
     catch (const GfractException& e)
     {
