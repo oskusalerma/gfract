@@ -13,9 +13,8 @@
 #error Your libpng is too old. Upgrade to at least version 1.0.3
 #endif
 
-static void save_file(image_info* img, char* filename);
 
-void save_file(image_info* img, char* filename)
+void my_png_save_img(image_info* img, char* filename)
 {
     FILE* fp;
     png_struct* png_ptr;
@@ -154,7 +153,7 @@ void do_png_save(image_info* img, GtkWidget* parent)
 
     if (gtk_dialog_run(GTK_DIALOG(dlg)) == GTK_RESPONSE_ACCEPT) {
         char* filename = gtk_file_chooser_get_filename(GTK_FILE_CHOOSER(dlg));
-        save_file(img, filename);
+        my_png_save_img(img, filename);
         g_free(filename);
     }
 

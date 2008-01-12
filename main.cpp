@@ -79,6 +79,9 @@ static int fhistory_current_pos = -1;
 // get current history entry
 static const fractal_info& history_get_current();
 
+// get given history entry
+static const fractal_info& history_get(int pos);
+
 // goto to the given history position. it is ok to give invalid values,
 // in which case nothing is done.
 static void history_goto(int pos);
@@ -224,7 +227,12 @@ void process_args(int argc, char** argv)
 
 const fractal_info& history_get_current()
 {
-    return *fhistory.at(fhistory_current_pos);
+    return history_get(fhistory_current_pos);
+}
+
+const fractal_info& history_get(int pos)
+{
+    return *fhistory.at(pos);
 }
 
 void history_goto(int pos)
@@ -233,7 +241,7 @@ void history_goto(int pos)
         return;
     }
 
-    img.finfo = *fhistory.at(pos);
+    img.finfo = history_get(pos);
     fhistory_current_pos = pos;
 
     start_rendering(&img);
