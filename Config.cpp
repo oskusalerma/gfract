@@ -181,7 +181,7 @@ void Config::setStr(const std::string& section, const std::string& key,
 }
 
 int Config::getInt(const std::string& section, const std::string& key,
-    int defaultVal)
+    int defaultVal, int minVal, int maxVal)
 {
     bool found;
 
@@ -191,7 +191,9 @@ int Config::getInt(const std::string& section, const std::string& key,
     {
         try
         {
-            return boost::lexical_cast<int>(res);
+            int val = boost::lexical_cast<int>(res);
+
+            return std::max(minVal, std::min(maxVal, val));
         }
         catch (boost::bad_lexical_cast& e)
         {

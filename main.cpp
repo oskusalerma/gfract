@@ -1241,7 +1241,7 @@ void load_config()
 
         img.load(&cfg, sectionMisc);
         opts.nr_threads = cfg.getInt(sectionMisc, keyThreads,
-            DEFAULT_NR_THREADS);
+            DEFAULT_NR_THREADS, 1);
 
         std::string palName = cfg.getStr(sectionMisc, keyPalette, "");
 

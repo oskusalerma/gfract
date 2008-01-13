@@ -98,10 +98,10 @@ void image_info::resetPosition()
 
 void image_info::load(Config* cfg, const std::string& section)
 {
-    user_width = cfg->getInt(section, keyWidth, DEFAULT_WIDTH);
-    user_height = cfg->getInt(section, keyHeight, DEFAULT_HEIGHT);
-    depth = cfg->getInt(section, keyDepth, DEFAULT_DEPTH);
-    aa_factor = cfg->getInt(section, keyAA, DEFAULT_AAFACTOR);
+    user_width = cfg->getInt(section, keyWidth, DEFAULT_WIDTH, 1);
+    user_height = cfg->getInt(section, keyHeight, DEFAULT_HEIGHT, 1);
+    depth = cfg->getInt(section, keyDepth, DEFAULT_DEPTH, 1);
+    aa_factor = cfg->getInt(section, keyAA, DEFAULT_AAFACTOR, 1);
 }
 
 void image_info::save(Config* cfg, const std::string& section)

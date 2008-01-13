@@ -41,7 +41,7 @@ public:
         const std::string& value);
 
     int getInt(const std::string& section, const std::string& key,
-        int defaultVal);
+        int defaultVal, int minVal, int maxVal = 2147483647);
 
     void setInt(const std::string& section, const std::string& key,
         int value);
