@@ -3,7 +3,7 @@ GTK_FRONTEND := gfract
 GTK_FRONTEND_OBJS := attr_dlg.o color.o color_dlg.o fractal.o globals.o \
 main.o misc.o my_png.o pal_rot_dlg.o palette.o timer.o palettes.o \
 image_info.o CondVar.o Mutex.o RenderThread.o Thread.o WorkQueue.o \
-Config.o
+Config.o Tool.o
 
 CXX := g++
 
