@@ -587,7 +587,7 @@ GtkWidget* menu_add(GtkWidget* menu, const char* name, GCallback func,
 
 void menu_bar_add(GtkWidget* menu, GtkWidget* submenu, const char* name)
 {
-    GtkWidget* temp = gtk_menu_item_new_with_label(name);
+    GtkWidget* temp = gtk_menu_item_new_with_mnemonic(name);
     gtk_widget_show(temp);
 
     gtk_menu_item_set_submenu(GTK_MENU_ITEM(temp), submenu);
@@ -610,7 +610,7 @@ void create_menus(GtkWidget* vbox)
     menu_add(menu, "Save as PNG", save_cmd);
     menu_add(menu, NULL, NULL);
     menu_add(menu, "Exit", quit);
-    menu_bar_add(menu_bar, menu, "File");
+    menu_bar_add(menu_bar, menu, "_File");
 
     menu = gtk_menu_new();
     menu_add(menu, "Attributes...", do_attr_dialog);
@@ -618,7 +618,7 @@ void create_menus(GtkWidget* vbox)
     menu_add(menu, NULL, NULL);
     switch_menu_cmd = menu_add(menu, "Switch fractal type",
                              switch_fractal_type);
-    menu_bar_add(menu_bar, menu, "Image");
+    menu_bar_add(menu_bar, menu, "_Image");
 
     menu2 = gtk_menu_new();
     menu_add_item(menu2, gtk_tearoff_menu_item_new());
@@ -635,7 +635,7 @@ void create_menus(GtkWidget* vbox)
     menu_add(menu, NULL, NULL);
     menu_add(menu, "Invert", invert);
     menu_add(menu, "Cycle...", do_pal_rot_dialog);
-    menu_bar_add(menu_bar, menu, "Palette");
+    menu_bar_add(menu_bar, menu, "_Palette");
 
     menu = gtk_hseparator_new();
     gtk_widget_show(menu);
