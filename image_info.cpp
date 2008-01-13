@@ -1,5 +1,6 @@
 #include "image_info.h"
 #include "Config.h"
+#include "RenderThread.h"
 #include "externs.h"
 #include "color.h"
 #include "misc.h"
@@ -204,6 +205,34 @@ bool image_info::isAALineComplete(int row)
     return true;
 }
 
+void image_info::adjustThreads()
+{
+    int new_threads = nr_threads - threads.size();
+
+    if (new_threads == 0)
+    {
+        return;
+    }
+    else if (new_threads > 0)
+    {
+        for (int i = 0; i < new_threads; i++)
+        {
+            // FIXME: avoid leaking the memory for RenderThread
+            threads.push_back(Thread(new RenderThread(this)));
+        }
+    }
+    else
+    {
+        // this is inefficient but we don't know which threads are going to
+        // pick up the quit notices, so we don't know which threads we
+        // should call join on, so just delete all of them and create
+        // the new number of threads.
+
+        stopThreads();
+        adjustThreads();
+    }
+}
+
 void image_info::stopThreads()
 {
     int nr = threads.size();
@@ -217,5 +246,7 @@ void image_info::stopThreads()
     {
         it->join();
     }
+
+    threads.clear();
 }
 

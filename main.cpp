@@ -15,7 +15,6 @@
 #include <gdk/gdkx.h>
 #include "Config.h"
 #include "Exception.h"
-#include "RenderThread.h"
 #include "attr_dlg.h"
 #include "color_dlg.h"
 #include "externs.h"
@@ -472,6 +471,9 @@ void image_attr_apply_cmd(GtkWidget* w, image_attr_dialog* dl)
                               img.user_width, img.user_height);
     }
 
+    img.nr_threads = gtk_spin_button_get_value_as_int(
+        GTK_SPIN_BUTTON(dl->threads));
+
     start_rendering(&img);
 
     resize_preview();
@@ -668,19 +670,9 @@ void create_threads(image_info* img)
 
         img->io_id = g_io_add_watch(img->ioc,
             (GIOCondition)(G_IO_IN | G_IO_HUP), io_callback, img);
-
-        // FIXME: user needs to be able to specify number of threads to
-        // use in some config window. also, thread creation/deletion needs
-        // to be fleshed out so the number can be changed dynamically at
-        // runtime.
-
-        for (int i = 0; i < img->nr_threads; i++)
-        {
-            // FIXME: avoid leaking the memory for RenderThread (not a big
-            // deal as long as we don't dynamically create/delete threads)
-            img->threads.push_back(Thread(new RenderThread(img)));
-        }
     }
+
+    img->adjustThreads();
 
     for (int i = 0; i < img->real_height; i++)
     {

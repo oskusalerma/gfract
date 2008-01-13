@@ -6,6 +6,7 @@
 static void width_update(GtkWidget* w, image_attr_dialog* dl);
 static void height_update(GtkWidget* w, image_attr_dialog* dl);
 static void aa_update(GtkWidget* w, image_attr_dialog* dl);
+static void threads_update(GtkWidget* w, image_attr_dialog* dl);
 static void constrain_update(GtkWidget*w, image_attr_dialog* dl);
 static void update_text(GtkLabel* label, int w, int h, int aa);
 
@@ -84,6 +85,16 @@ void aa_update(GtkWidget* w, image_attr_dialog* dl)
                 aa);
 }
 
+void threads_update(GtkWidget* w, image_attr_dialog* dl)
+{
+    int threads = atoi(gtk_entry_get_text(GTK_ENTRY(dl->threads)));
+
+    if (threads <= 0)
+        return;
+
+    gtk_spin_button_update(GTK_SPIN_BUTTON(dl->threads));
+}
+
 void constrain_update(GtkWidget* w, image_attr_dialog* dl)
 {
     if (GTK_TOGGLE_BUTTON(dl->const_ra)->active) {
@@ -150,10 +161,10 @@ void attr_dlg_new(image_attr_dialog** ptr, image_info* img)
                        TRUE, TRUE, 0);
     gtk_widget_show(tmp);
 
-    table = gtk_table_new(5, 2, FALSE);
+    table = gtk_table_new(6, 2, FALSE);
     gtk_table_set_row_spacings(GTK_TABLE(table), 2);
-    gtk_table_set_row_spacing(GTK_TABLE(table), 2, 10);
-    gtk_table_set_row_spacing(GTK_TABLE(table), 3, 15);
+    gtk_table_set_row_spacing(GTK_TABLE(table), 3, 10);
+    gtk_table_set_row_spacing(GTK_TABLE(table), 4, 15);
     gtk_table_set_col_spacings(GTK_TABLE(table), 5);
 
     vbox = gtk_vbox_new(FALSE, 0);
@@ -212,6 +223,22 @@ void attr_dlg_new(image_attr_dialog** ptr, image_info* img)
                        dl);
     gtk_widget_show(tmp);
     dl->aa = tmp;
+
+    row++;
+
+    tmp = gtk_label_new("Threads:");
+    gtk_misc_set_alignment(GTK_MISC(tmp), 0.0, 0.5);
+    gtk_table_attach_defaults(GTK_TABLE(table), tmp, 0, 1, row, row + 1);
+    gtk_widget_show(tmp);
+
+    adj = gtk_adjustment_new(img->nr_threads, 1.0, 10000.0, 1.0, 1.0, 0.0);
+    tmp = gtk_spin_button_new(GTK_ADJUSTMENT(adj), 0.0, 0);
+    gtk_table_attach_defaults(GTK_TABLE(table), tmp, 1, 2, row, row + 1);
+    g_signal_connect(GTK_OBJECT(tmp), "changed",
+                     GTK_SIGNAL_FUNC(threads_update),
+                     dl);
+    gtk_widget_show(tmp);
+    dl->threads = tmp;
 
     row++;
 

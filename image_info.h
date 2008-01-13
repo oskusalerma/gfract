@@ -78,6 +78,10 @@ struct image_info : boost::noncopyable
     // returns true if all the lines needed to AA the given row are rendered
     bool isAALineComplete(int row);
 
+    // delete/create threads as needed (nr_threads = new thread count,
+    // thread.size() = old thread count)
+    void adjustThreads();
+
     // stop all background threads (and wait for them to stop)
     void stopThreads();
 
