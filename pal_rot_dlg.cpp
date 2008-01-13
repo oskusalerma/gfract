@@ -133,33 +133,33 @@ void palette_rotation_dlg_new(palette_rotation_dialog** ptr,
     gtk_container_add(GTK_CONTAINER(dl->window), hbox);
 
 
-    dl->step_b = gtk_button_new_with_label(" < ");
+    dl->step_b = gtk_button_new_from_stock(GTK_STOCK_MEDIA_PREVIOUS);
     g_signal_connect(GTK_OBJECT(dl->step_b), "clicked",
                        GTK_SIGNAL_FUNC(step_backward),
                        dl);
     gtk_box_pack_start(GTK_BOX(hbox), dl->step_b, FALSE, FALSE, 0);
 
-    dl->cycle_b = gtk_button_new_with_label(" << ");
+    dl->cycle_b = gtk_button_new_from_stock(GTK_STOCK_MEDIA_REWIND);
     g_signal_connect(GTK_OBJECT(dl->cycle_b), "clicked",
                        GTK_SIGNAL_FUNC(cycle_backward),
                        dl);
     gtk_box_pack_start(GTK_BOX(hbox), dl->cycle_b, FALSE, FALSE, 0);
 
 
-    dl->stop = gtk_button_new_with_label(" Stop ");
+    dl->stop = gtk_button_new_from_stock(GTK_STOCK_MEDIA_STOP);
     g_signal_connect(GTK_OBJECT(dl->stop), "clicked",
                        GTK_SIGNAL_FUNC(stop),
                        dl);
     gtk_box_pack_start(GTK_BOX(hbox), dl->stop, FALSE, FALSE, 4);
     gtk_widget_set_sensitive(dl->stop, FALSE);
 
-    dl->cycle_f = gtk_button_new_with_label(" >> ");
+    dl->cycle_f = gtk_button_new_from_stock(GTK_STOCK_MEDIA_FORWARD);
     g_signal_connect(GTK_OBJECT(dl->cycle_f), "clicked",
                        GTK_SIGNAL_FUNC(cycle_forward),
                        dl);
     gtk_box_pack_start(GTK_BOX(hbox), dl->cycle_f, FALSE, FALSE, 0);
 
-    dl->step_f = gtk_button_new_with_label(" > ");
+    dl->step_f = gtk_button_new_from_stock(GTK_STOCK_MEDIA_NEXT);
     g_signal_connect(GTK_OBJECT(dl->step_f), "clicked",
                        GTK_SIGNAL_FUNC(step_forward),
                        dl);

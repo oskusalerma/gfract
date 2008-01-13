@@ -93,26 +93,26 @@ void color_dlg_new(color_dialog** ptr, image_info* img)
     gtk_window_set_position(GTK_WINDOW(dl->dialog), GTK_WIN_POS_MOUSE);
 
     /* BUTTONS */
-    dl->ok_button = gtk_button_new_with_label("OK");
+    dl->ok_button = gtk_button_new_from_stock(GTK_STOCK_OK);
     g_signal_connect(GTK_OBJECT(dl->ok_button), "clicked",
         GTK_SIGNAL_FUNC(on_refresh), dl);
     gtk_box_pack_start(GTK_BOX(GTK_DIALOG(dl->dialog)->action_area),
         dl->ok_button, TRUE, TRUE, 0);
 
-    dl->apply_button = gtk_button_new_with_label("Apply");
+    dl->apply_button = gtk_button_new_from_stock(GTK_STOCK_APPLY);
     g_signal_connect(GTK_OBJECT(dl->apply_button), "clicked",
         GTK_SIGNAL_FUNC(on_refresh), dl);
     gtk_box_pack_start(GTK_BOX(GTK_DIALOG(dl->dialog)->action_area),
         dl->apply_button, TRUE, TRUE, 0);
 
-    tmp = gtk_button_new_with_label("Cancel");
+    tmp = gtk_button_new_from_stock(GTK_STOCK_CANCEL);
     g_signal_connect_object(GTK_OBJECT(tmp), "clicked",
         GTK_SIGNAL_FUNC(gtk_widget_destroy), GTK_OBJECT(dl->dialog),
                 G_CONNECT_SWAPPED);
     gtk_box_pack_start(GTK_BOX(GTK_DIALOG(dl->dialog)->action_area), tmp,
         TRUE, TRUE, 0);
 
-    tmp = gtk_button_new_with_label("Help");
+    tmp = gtk_button_new_from_stock(GTK_STOCK_HELP);
     g_signal_connect_object(GTK_OBJECT(tmp), "clicked",
         GTK_SIGNAL_FUNC(on_help), GTK_OBJECT(dl->dialog),
                 G_CONNECT_SWAPPED);
