@@ -17,6 +17,8 @@ void width_update(GtkWidget* w, image_attr_dialog* dl)
     if (width <= 0)
         return;
 
+    gtk_spin_button_update(GTK_SPIN_BUTTON(dl->width));
+
     if (GTK_TOGGLE_BUTTON(dl->const_ra)->active) {
         height = int(width/dl->ratio);
         g_signal_handlers_block_by_func(GTK_OBJECT(dl->height),
@@ -44,6 +46,8 @@ void height_update(GtkWidget* w, image_attr_dialog* dl)
     if (height <= 0)
         return;
 
+    gtk_spin_button_update(GTK_SPIN_BUTTON(dl->height));
+
     if (GTK_TOGGLE_BUTTON(dl->const_ra)->active) {
         width = int(height*dl->ratio);
         g_signal_handlers_block_by_func(GTK_OBJECT(dl->width),
@@ -69,6 +73,8 @@ void aa_update(GtkWidget* w, image_attr_dialog* dl)
 
     if (aa <= 0)
         return;
+
+    gtk_spin_button_update(GTK_SPIN_BUTTON(dl->aa));
 
     update_text(GTK_LABEL(dl->text),
                 gtk_spin_button_get_value_as_int(
