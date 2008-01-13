@@ -26,11 +26,6 @@
 #include "timer.h"
 #include "version.h"
 
-#define ZOOM_INTERVAL 25
-
-/* percentage of image width that zoom box starts at */
-#define ZOOM_BOX_WIDTH 0.35
-
 #define MIN_WINDOW_WIDTH 320
 
 /* recalc/stop button texts */
@@ -45,16 +40,12 @@
 static const std::string sectionMisc("misc");
 static const std::string keyPalette("palette");
 
+class Tool;
+class ZoomInTool;
+
 struct status_info
 {
-    int zooming;
     int julia_browsing;
-
-    /* zoom box info */
-    int z_x;
-    int z_y;
-    int z_width;
-    int z_height;
 };
 
 static std::string cfgFilename;
@@ -95,13 +86,11 @@ static void stop_rendering(image_info* img);
 static void start_julia_browsing(void);
 static void stop_julia_browsing(void);
 static void process_args(int argc, char** argv);
-static void kill_zoom_timers(void);
-static void zoom_resize(int arg);
 static void resize_preview(void);
-static int zoom_is_valid_size(void);
 static int find_palette_by_name(const std::string& name, bool must_exist);
 static void quit(void);
 static void redraw_image(image_info* img);
+static void draw_xor_rect(const GdkRectangle& rect);
 static void create_menus(GtkWidget* vbox);
 static void create_threads(image_info* img);
 static void menu_add_item(GtkWidget* menu, GtkWidget* item);
@@ -121,6 +110,7 @@ static gint button_press_event(GtkWidget* widget, GdkEventButton* event);
 static gint j_pre_delete(GtkWidget *widget, GdkEvent *event, gpointer data);
 static gint child_reaper(gpointer nothing);
 static gint cfg_saver(gpointer nothing);
+static void tool_activate(Tool* tool);
 
 static void invert(void);
 static void switch_fractal_type(void);
@@ -154,7 +144,6 @@ static void save_cmd(void);
 /* reset fractal position */
 static void reset_fractal_cmd(void);
 
-
 /* general stuff we need to have */
 static status_info st;
 static image_info img;
@@ -171,8 +160,10 @@ static GtkWidget* depth_spin = NULL;
 static GtkWidget* palette_ip = NULL;
 static GtkWidget* pbar = NULL;
 static GtkWidget* switch_menu_cmd = NULL;
-static int zoom_timer;
 
+static Tool* tool_active = NULL;
+static Tool* tool_zoom_out = NULL;
+static ZoomInTool* tool_zoom_in = NULL;
 
 /* DIALOG POINTERS */
 
@@ -180,6 +171,297 @@ static image_attr_dialog* img_attr_dlg = NULL;
 static color_dialog* color_dlg = NULL;
 static palette_rotation_dialog* pal_rot_dlg = NULL;
 
+// FIXME: seriously look into moving tools out of this file
+
+/** Base class for all tools. */
+class Tool
+{
+public:
+    virtual ~Tool() {}
+
+    /** Activate the tool (user clicked on the toolbar icon for this
+        tool). Return value: if false, instantly de-activate the tool
+        (tools that do their work instantly, like zoom out). */
+    virtual bool activate() = 0;
+
+    /** Deactivate the tool. Reset any internal state, remove timers,
+        redraw screen to get rid of anything the tool might have painted,
+        etc. */
+    virtual void deactivate() { }
+
+    /** Types of mouse button clicks. */
+    enum ButtonType { LEFT, MIDDLE, RIGHT };
+
+    /** Convert from GDK's button type to ours. */
+    static ButtonType fromGDKButtonType(int button);
+
+    /** Mouse button event. */
+    virtual void buttonEvent(ButtonType type, bool isPress, int x, int y) { }
+
+    /** Mouse movement event. */
+    virtual void moveEvent(int x, int y) { }
+
+    /** Keyboard event. If return value is true, the event was consumed by
+        the tool. */
+    virtual bool keyEvent(GdkEventKey* ev) { return false; }
+};
+
+Tool::ButtonType Tool::fromGDKButtonType(int button)
+{
+    ButtonType bt;
+
+    switch (button)
+    {
+    case 1:
+        bt = LEFT;
+
+        break;
+
+    case 2:
+        bt = MIDDLE;
+
+        break;
+
+    case 3:
+        bt = RIGHT;
+
+        break;
+
+    default:
+        bt = LEFT;
+    }
+
+    return bt;
+}
+
+/** Zoom in. */
+class ZoomInTool : public Tool
+{
+public:
+    ZoomInTool();
+
+    virtual bool activate();
+    virtual void deactivate();
+    virtual void buttonEvent(ButtonType type, bool isPress, int x, int y);
+    virtual void moveEvent(int x, int y);
+    virtual bool keyEvent(GdkEventKey* ev);
+
+    void timerCallback(int arg);
+
+private:
+    // zoom in to the selected area
+    void zoom();
+
+    void killTimer();
+
+    void resizeRect(int arg);
+
+    int rectIsValidSize();
+
+    // ms between zoom timer callbacks
+    static const int ZOOM_INTERVAL = 25;
+
+    // percentage of image width that zoom box starts at */
+    static const float ZOOM_BOX_WIDTH;
+
+    int timer_id;
+
+    // zoom box coordinates
+    GdkRectangle rect;
+};
+
+const float ZoomInTool::ZOOM_BOX_WIDTH = 0.35;
+
+static gint zoom_in_callback(int arg);
+
+ZoomInTool::ZoomInTool()
+{
+    timer_id = -1;
+}
+
+bool ZoomInTool::activate()
+{
+    rect.x = 0;
+    rect.y = 0;
+    rect.width = int(ZOOM_BOX_WIDTH * img.user_width);
+    rect.height = int(rect.width / img.ratio);
+
+    draw_xor_rect(rect);
+
+    return true;
+}
+
+void ZoomInTool::deactivate()
+{
+    draw_xor_rect(rect);
+
+    killTimer();
+
+    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(zoom_in_button),
+                                 FALSE);
+}
+
+void ZoomInTool::killTimer()
+{
+    if (timer_id != -1)
+    {
+        g_source_remove(timer_id);
+        timer_id = -1;
+    }
+}
+
+void ZoomInTool::buttonEvent(ButtonType type, bool isPress, int x, int y)
+{
+    if (!isPress)
+    {
+        // button has been released, stop changing zoom box size if we
+        // were doing that
+        killTimer();
+
+        return;
+    }
+
+    // don't accept additional clicks while timer is active (other than
+    // middle click)
+    if ((timer_id != -1) && ((type == LEFT) || (type == RIGHT)))
+    {
+        return;
+    }
+
+    int zoom_dir = 0;
+
+    if (type == LEFT)
+    {
+        zoom_dir = 1;
+    }
+    else if (type == MIDDLE)
+    {
+        zoom();
+    }
+    else if (type == RIGHT)
+    {
+        zoom_dir = -1;
+    }
+
+    if (zoom_dir)
+    {
+        draw_xor_rect(rect);
+
+        resizeRect(zoom_dir);
+
+        if (!rectIsValidSize())
+        {
+            resizeRect(-zoom_dir);
+        }
+        else
+        {
+            timer_id = g_timeout_add(ZOOM_INTERVAL,
+                                     (GtkFunction)zoom_in_callback,
+                                     (gpointer)(2 * zoom_dir));
+        }
+
+        draw_xor_rect(rect);
+    }
+}
+
+void ZoomInTool::moveEvent(int x, int y)
+{
+    draw_xor_rect(rect);
+
+    rect.x = x;
+    rect.y = y;
+
+    draw_xor_rect(rect);
+}
+
+bool ZoomInTool::keyEvent(GdkEventKey* ev)
+{
+    switch (ev->keyval)
+    {
+    case GDK_Return:
+        zoom();
+
+        return true;
+    }
+
+    return false;
+}
+
+void ZoomInTool::zoom(void)
+{
+    double xmin, xmax, ymax;
+
+    ymax = rect.y;
+    xmin = rect.x;
+    xmax = rect.x + rect.width - 1;
+
+    get_coords(&xmin, &ymax);
+    get_coords(&xmax, NULL);
+
+    img.finfo.ymax = ymax;
+    img.finfo.xmin = xmin;
+    img.finfo.xmax = xmax;
+
+    tool_activate(NULL);
+
+    start_rendering(&img);
+}
+
+void ZoomInTool::resizeRect(int dir)
+{
+    rect.width += arg * 4;
+    rect.height = int(rect.width / img.ratio);
+}
+
+int ZoomInTool::rectIsValidSize(void)
+{
+    return !((rect.width < 4) || (rect.width > (img.user_width - 16)) ||
+             (rect.height < 4) || (rect.height > (img.user_height - 16)));
+}
+
+void ZoomInTool::timerCallback(int arg)
+{
+    draw_xor_rect(rect);
+
+    resizeRect(arg);
+
+    if (!rectIsValidSize())
+    {
+        resizeRect(-arg);
+    }
+
+    draw_xor_rect(rect);
+}
+
+gint zoom_in_callback(int arg)
+{
+    tool_zoom_in->timerCallback(arg);
+
+    return TRUE;
+}
+
+/** Zoom out. */
+class ZoomOutTool : public Tool
+{
+public:
+    virtual bool activate();
+};
+
+bool ZoomOutTool::activate()
+{
+    double half_w, half_h;
+
+    half_w = (img.finfo.xmax - img.finfo.xmin) / 2.0;
+    half_h = (img.finfo.ymax - img.ymin()) / 2.0;
+
+    img.finfo.ymax += half_h;
+    img.finfo.xmin -= half_w;
+    img.finfo.xmax += half_w;
+
+    start_rendering(&img);
+
+    return false;
+}
 
 void print_version(void)
 {
@@ -262,6 +544,31 @@ void reset_fractal_cmd(void)
     img.resetPosition();
 
     start_rendering(&img);
+}
+
+void tool_activate(Tool* tool)
+{
+    if (tool_active)
+    {
+        tool_active->deactivate();
+    }
+
+    if (!tool || (tool == tool_active))
+    {
+        tool_active = NULL;
+    }
+    else
+    {
+        tool_active = tool->activate() ? tool : NULL;
+    }
+
+    if (tool_active)
+    {
+        // if we have a tool still active, make sure the drawing area has
+        // the keyboard focus so our tool gets any keyboard input
+
+        gtk_widget_grab_focus(img.drawing_area);
+    }
 }
 
 void switch_fractal_type(void)
@@ -367,9 +674,7 @@ void init_misc(void)
     j_pre.finfo.type = JULIA;
 
     /* misc init */
-    st.zooming = false;
     st.julia_browsing = false;
-    zoom_timer = -1;
 
     opts.timing = 0;
 }
@@ -556,8 +861,8 @@ gint child_reaper(gpointer nothing)
 void get_coords(double* x, double* y)
 {
     if (y != NULL)
-        *y = img.finfo.ymax - ((img.finfo.xmax - img.finfo.xmin)/
-            (double)img.user_width) * (*y);
+        *y = img.finfo.ymax - ((img.finfo.xmax - img.finfo.xmin) /
+                               img.user_width) * (*y);
 
     if (x != NULL)
         *x = ((*x)/(double)img.user_width) *
@@ -771,110 +1076,24 @@ gint j_pre_delete(GtkWidget* widget, GdkEvent* event, gpointer data)
     return TRUE;
 }
 
-void draw_zoom_box(void)
+void draw_xor_rect(const GdkRectangle& rect)
 {
     gdk_gc_set_function(drawing_area->style->white_gc, GDK_XOR);
 
     gdk_draw_rectangle(drawing_area->window, drawing_area->style->white_gc,
-                       FALSE, st.z_x, st.z_y, st.z_width,
-                       st.z_height);
+                       FALSE, rect.x, rect.y, rect.width, rect.height);
 
     gdk_gc_set_function(drawing_area->style->white_gc, GDK_COPY);
 }
 
-void start_zooming(void)
-{
-    st.z_x = 0;
-    st.z_y = 0;
-    st.z_width = int(ZOOM_BOX_WIDTH * img.user_width);
-    st.z_height = int(st.z_width/img.ratio);
-    st.zooming = true;
-
-    draw_zoom_box();
-}
-
-void stop_zooming(void)
-{
-    st.zooming = false;
-    draw_zoom_box();
-    kill_zoom_timers();
-}
-
-void zoom_in(void)
-{
-    double xmin,xmax,ymax;
-
-    st.zooming = false;
-    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(zoom_in_button),
-                                FALSE);
-
-    ymax = (double)st.z_y;
-    xmin = (double)st.z_x;
-    xmax = (double)(st.z_x+st.z_width-1);
-
-    get_coords(&xmin, &ymax);
-    get_coords(&xmax, NULL);
-
-    img.finfo.ymax = ymax;
-    img.finfo.xmin = xmin;
-    img.finfo.xmax = xmax;
-
-    start_rendering(&img);
-}
-
-void zoom_resize(int arg)
-{
-    st.z_width += arg*4;
-    st.z_height = int(st.z_width/img.ratio);
-}
-
-int zoom_is_valid_size(void)
-{
-    if ( (st.z_width < 4) || (st.z_width > (img.user_width-16))
-         || (st.z_height < 4) || (st.z_height > (img.user_height-16))
-         )
-        return false;
-    else
-        return true;
-}
-
-gint zoom_callback(int arg)
-{
-    draw_zoom_box();
-
-    zoom_resize(arg);
-    if (!zoom_is_valid_size())
-        zoom_resize(-1*arg);
-
-    draw_zoom_box();
-
-    return TRUE;
-}
-
 void zoom_in_func(GtkWidget* widget)
 {
-    if (GTK_TOGGLE_BUTTON(widget)->active) {
-        start_zooming();
-    } else {
-        stop_zooming();
-    }
+    tool_activate(tool_zoom_in);
 }
 
 void zoom_out_func(GtkWidget* widget)
 {
-    double ymin,half_w,half_h;
-
-    ymin = img.finfo.ymax - ((img.finfo.xmax - img.finfo.xmin)/
-        (double)img.real_width) * (double)(img.real_height - 1);
-
-    half_w = (img.finfo.xmax-img.finfo.xmin)/2.0;
-    half_h = (img.finfo.ymax-ymin)/2.0;
-
-    img.finfo.ymax += half_h;
-    img.finfo.xmin -= half_w;
-    img.finfo.xmax += half_w;
-
-    start_rendering(&img);
+    tool_activate(tool_zoom_out);
 }
 
 void recalc_button(GtkWidget* widget)
@@ -893,43 +1112,20 @@ void toggle_palette_ip(GtkWidget* widget)
 
 gint button_press_event(GtkWidget* widget, GdkEventButton* event)
 {
-    gtk_widget_grab_focus(img.drawing_area);
-
     /* ignore double- and triple clicks */
-    if ( (event->type == GDK_2BUTTON_PRESS) ||
-         (event->type == GDK_3BUTTON_PRESS) )
+    if ((event->type == GDK_2BUTTON_PRESS) ||
+        (event->type == GDK_3BUTTON_PRESS))
+    {
         return TRUE;
+    }
 
-    /* don't react to pressing the other button if we're
-       zooming in or out */
-    if ( (zoom_timer != -1) && ( (event->button == 1) ||
-                                 (event->button == 3) ) )
-        return TRUE;
+    if (tool_active)
+    {
+        tool_active->buttonEvent(Tool::fromGDKButtonType(event->button),
+                                 true, int(event->x), int(event->y));
+    }
 
-    if (st.zooming) {
-        draw_zoom_box();
-        if (event->button == 1) {
-            zoom_resize(1);
-            if (!zoom_is_valid_size())
-                zoom_resize(-1);
-            else
-                zoom_timer = g_timeout_add(ZOOM_INTERVAL,
-                                           (GtkFunction)zoom_callback,
-                                           (gpointer)2);
-        } else if (event->button == 2)
-            zoom_in();
-        else if (event->button == 3) {
-            zoom_resize(-1);
-            if (!zoom_is_valid_size())
-                zoom_resize(1);
-            else
-                zoom_timer = g_timeout_add(ZOOM_INTERVAL,
-                                           (GtkFunction)zoom_callback,
-                                           (gpointer)-2);
-
-        }
-        draw_zoom_box();
-    } else if (st.julia_browsing) {
+    if (st.julia_browsing) {
         if (event->button == 1) {
             img.finfo.u.julia.c_re = event->x;
             img.finfo.u.julia.c_im = event->y;
@@ -954,38 +1150,32 @@ gint button_press_event(GtkWidget* widget, GdkEventButton* event)
     return TRUE;
 }
 
-void kill_zoom_timers(void)
-{
-    if (zoom_timer != -1) {
-        g_source_remove(zoom_timer);
-    }
-    zoom_timer = -1;
-}
-
 gint button_release_event(GtkWidget* widget, GdkEventButton* event)
 {
-    kill_zoom_timers();
+    if (tool_active)
+    {
+        tool_active->buttonEvent(Tool::fromGDKButtonType(event->button),
+                                 false, int(event->x), int(event->y));
+    }
 
     return TRUE;
 }
 
 gint motion_event(GtkWidget* widget, GdkEventMotion* event)
 {
-    if ((!st.zooming) && (!st.julia_browsing))
-        return TRUE;
+    if (tool_active)
+    {
+        tool_active->moveEvent(int(event->x), int(event->y));
+    }
+
+    // FIXME: julia browsing should be a Tool (it interacts very badly if
+    // you try to do that and zooming in at the same time, for example)
 
     if (st.julia_browsing) {
         j_pre.finfo.u.julia.c_re = event->x;
         j_pre.finfo.u.julia.c_im = event->y;
         get_coords(&j_pre.finfo.u.julia.c_re, &j_pre.finfo.u.julia.c_im);
         start_rendering(&j_pre);
-    } else if (st.zooming) {
-        draw_zoom_box();
-
-        st.z_x = int(event->x);
-        st.z_y = int(event->y);
-
-        draw_zoom_box();
     }
 
     return TRUE;
@@ -1039,19 +1229,15 @@ gint expose_event(GtkWidget* widget, GdkEventExpose* event,
 
 gint key_event(GtkWidget* widget, GdkEventKey* event)
 {
+    if (tool_active && tool_active->keyEvent(event))
+    {
+        return TRUE;
+    }
+
     int ret = FALSE;
 
     switch (event->keyval)
     {
-    case GDK_Return:
-        if (st.zooming)
-        {
-            zoom_in();
-            ret = TRUE;
-        }
-
-        break;
-
     case GDK_Page_Up:
         history_goto(fhistory_current_pos - 1);
         ret = TRUE;
@@ -1320,6 +1506,7 @@ int main(int argc, char** argv)
     gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 0);
 
     /* zoom in */
+    tool_zoom_in = new ZoomInTool();
     zoom_in_button = gtk_toggle_button_new();
     gtk_container_add(GTK_CONTAINER(zoom_in_button),
                       get_stock_image(GTK_STOCK_ZOOM_IN));
@@ -1333,6 +1520,7 @@ int main(int argc, char** argv)
     gtk_widget_show(zoom_in_button);
 
     /* zoom out */
+    tool_zoom_out = new ZoomOutTool();
     zoom_out_button = gtk_button_new();
     gtk_container_add(GTK_CONTAINER(zoom_out_button),
                       get_stock_image(GTK_STOCK_ZOOM_OUT));

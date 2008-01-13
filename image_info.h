@@ -30,6 +30,10 @@ public:
     // coordinates */
     double xmin,xmax,ymax;
 
+    // FIXME: get rid of these relics, no need anymore with built-in
+    // history (also make the "reset fractal" switch back to mandelbrot
+    // mode)
+
     // saved mandelbrot coordinates. we need these when switching back
     // from julia mode.
     double old_xmin, old_xmax, old_ymax;
@@ -59,6 +63,9 @@ struct image_info : boost::noncopyable
 
     // reset to default Mandelbrot position
     void resetPosition();
+
+    // get ymin
+    double ymin();
 
     // load config. NOTE: setSize MUST be called after this.
     void load(Config* cfg, const std::string& section);

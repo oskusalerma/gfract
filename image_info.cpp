@@ -99,6 +99,11 @@ void image_info::resetPosition()
     finfo.ymax = 1.2;
 }
 
+double image_info::ymin()
+{
+    return finfo.ymax - ((finfo.xmax - finfo.xmin) / real_width) * real_height;
+}
+
 void image_info::load(Config* cfg, const std::string& section)
 {
     user_width = cfg->getInt(section, keyWidth, DEFAULT_WIDTH, 1);
