@@ -26,8 +26,6 @@
 #include "palette.h"
 #include "timer.h"
 #include "version.h"
-#include "zoom_in.xpm"
-#include "zoom_out.xpm"
 
 #define ZOOM_INTERVAL 25
 
@@ -121,7 +119,7 @@ static void menu_bar_add(GtkWidget* menu, GtkWidget* submenu,
 static void show_msg_box(GtkWidget* parent, const std::string& msg);
 static void get_coords(double* x, double* y);
 static GdkRectangle horiz_intersect(GdkRectangle* a1, GdkRectangle* a2);
-static GtkWidget* create_pixmap(GtkWidget* widget, char** xpm_data);
+static GtkWidget* get_stock_image(const char* stock_id);
 
 static gint expose_event(GtkWidget* widget, GdkEventExpose* event,
                          image_info* img);
@@ -651,20 +649,13 @@ void create_menus(GtkWidget* vbox)
     gtk_box_pack_start(GTK_BOX(vbox), menu, FALSE, FALSE, 0);
 }
 
-GtkWidget* create_pixmap(GtkWidget* widget, char** xpm_data)
+GtkWidget* get_stock_image(const char* stock_id)
 {
-    GdkPixmap* pixmap;
-    GdkBitmap* mask;
-    GtkWidget* pwid;
+    GtkWidget* w = gtk_image_new_from_stock(stock_id,
+                                            GTK_ICON_SIZE_SMALL_TOOLBAR);
+    gtk_widget_show(w);
 
-    pixmap = gdk_pixmap_create_from_xpm_d(widget->window, &mask,
-             &(gtk_widget_get_style(widget)->bg[GTK_STATE_NORMAL]),
-             (gchar**)xpm_data);
-    gf_a(pixmap != NULL);
-    pwid = gtk_image_new_from_pixmap(pixmap, mask);
-    gtk_widget_show(pwid);
-
-    return pwid;
+    return w;
 }
 
 void create_threads(image_info* img)
@@ -1349,7 +1340,7 @@ int main(int argc, char** argv)
     /* zoom in */
     zoom_in_button = gtk_toggle_button_new();
     gtk_container_add(GTK_CONTAINER(zoom_in_button),
-                      create_pixmap(window, zoom_in_xpm));
+                      get_stock_image(GTK_STOCK_ZOOM_IN));
     g_signal_connect(GTK_OBJECT(zoom_in_button), "toggled",
                        GTK_SIGNAL_FUNC(zoom_in_func), NULL);
     gtk_box_pack_start(GTK_BOX(hbox), zoom_in_button, FALSE, FALSE,
@@ -1362,7 +1353,7 @@ int main(int argc, char** argv)
     /* zoom out */
     zoom_out_button = gtk_button_new();
     gtk_container_add(GTK_CONTAINER(zoom_out_button),
-                      create_pixmap(window, zoom_out_xpm));
+                      get_stock_image(GTK_STOCK_ZOOM_OUT));
     g_signal_connect(GTK_OBJECT(zoom_out_button), "clicked",
                        GTK_SIGNAL_FUNC(zoom_out_func), NULL);
     gtk_box_pack_start(GTK_BOX(hbox), zoom_out_button, FALSE, FALSE,

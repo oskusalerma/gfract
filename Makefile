@@ -18,7 +18,7 @@ CXXFLAGS := $(DEFS) -O2 -fomit-frame-pointer -ffast-math
 LDFLAGS := -lz -lpthread -lboost_regex -lboost_filesystem
 LDFLAGS := $(shell pkg-config --libs gtk+-2.0 libpng) $(LDFLAGS)
 
-HEADERS := $(wildcard *.h *.xpm)
+HEADERS := $(wildcard *.h)
 PALETTES := $(wildcard palettes/*.map)
 
 $(GTK_FRONTEND): $(GTK_FRONTEND_OBJS)
