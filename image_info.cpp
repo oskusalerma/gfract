@@ -9,6 +9,7 @@ static const std::string keyWidth("width");
 static const std::string keyHeight("height");
 static const std::string keyDepth("depth");
 static const std::string keyAA("anti-aliasing");
+static const std::string keyThreads("threads");
 
 std::string fractal_info::to_str() const
 {
@@ -64,6 +65,7 @@ image_info::image_info()
     real_height = user_height = DEFAULT_HEIGHT;
     aa_factor = DEFAULT_AAFACTOR;
     depth = DEFAULT_DEPTH;
+    nr_threads = DEFAULT_NR_THREADS;
 
     rgb_data = NULL;
     raw_data = NULL;
@@ -102,6 +104,7 @@ void image_info::load(Config* cfg, const std::string& section)
     user_height = cfg->getInt(section, keyHeight, DEFAULT_HEIGHT, 1);
     depth = cfg->getInt(section, keyDepth, DEFAULT_DEPTH, 1);
     aa_factor = cfg->getInt(section, keyAA, DEFAULT_AAFACTOR, 1);
+    nr_threads = cfg->getInt(section, keyThreads, DEFAULT_NR_THREADS, 1);
 }
 
 void image_info::save(Config* cfg, const std::string& section)
@@ -110,6 +113,7 @@ void image_info::save(Config* cfg, const std::string& section)
     cfg->setInt(section, keyHeight, user_height);
     cfg->setInt(section, keyDepth, depth);
     cfg->setInt(section, keyAA, aa_factor);
+    cfg->setInt(section, keyThreads, nr_threads);
 }
 
 void image_info::signalRowCompleted(int row)

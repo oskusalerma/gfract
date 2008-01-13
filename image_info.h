@@ -53,7 +53,8 @@ struct image_info : boost::noncopyable
         DEFAULT_WIDTH = 800,
         DEFAULT_HEIGHT = 600,
         DEFAULT_AAFACTOR = 1,
-        DEFAULT_DEPTH = 300
+        DEFAULT_DEPTH = 300,
+        DEFAULT_NR_THREADS = 2
     };
 
     // reset to default Mandelbrot position
@@ -155,6 +156,9 @@ struct image_info : boost::noncopyable
     // stupidity of std::vector<bool> in the C++ standard (it does not
     // actually store bools and is slower).
     std::vector<char> lines_done_vec;
+
+    // how many threads we should use
+    int nr_threads;
 
     // render threads
     typedef std::list<Thread> threads_t;

@@ -42,11 +42,8 @@
 #define JPRE_SIZE    160
 #define JPRE_AAFACTOR 2
 
-#define DEFAULT_NR_THREADS 2
-
 // config section/key names
 static const std::string sectionMisc("misc");
-static const std::string keyThreads("threads");
 static const std::string keyPalette("palette");
 
 struct status_info
@@ -90,9 +87,6 @@ struct options
 {
     // display amount of time needed for rendering
     int timing;
-
-    // number of background render threads to use
-    int nr_threads;
 };
 
 static gboolean io_callback(GIOChannel* source, GIOCondition condition,
@@ -379,7 +373,6 @@ void init_misc(void)
     zoom_timer = -1;
 
     opts.timing = 0;
-    opts.nr_threads = DEFAULT_NR_THREADS;
 }
 
 /* returns the horizontal intersection part of a1 and a2. if the
@@ -681,9 +674,7 @@ void create_threads(image_info* img)
         // to be fleshed out so the number can be changed dynamically at
         // runtime.
 
-        int nr_of_threads = img == &j_pre ? 1 : opts.nr_threads;
-
-        for (int i = 0; i < nr_of_threads; i++)
+        for (int i = 0; i < img->nr_threads; i++)
         {
             // FIXME: avoid leaking the memory for RenderThread (not a big
             // deal as long as we don't dynamically create/delete threads)
@@ -1211,7 +1202,6 @@ void save_config()
         Config cfg;
 
         img.save(&cfg, sectionMisc);
-        cfg.setInt(sectionMisc, keyThreads, opts.nr_threads);
         cfg.setStr(sectionMisc, keyPalette, palette_get_current_name());
 
         cfg.saveToFile(cfgFilename);
@@ -1240,8 +1230,6 @@ void load_config()
         cfg.loadFromFile(cfgFilename);
 
         img.load(&cfg, sectionMisc);
-        opts.nr_threads = cfg.getInt(sectionMisc, keyThreads,
-            DEFAULT_NR_THREADS, 1);
 
         std::string palName = cfg.getStr(sectionMisc, keyPalette, "");
 
@@ -1309,6 +1297,8 @@ int main(int argc, char** argv)
 
     img.setSize(img.user_width, img.user_height, img.aa_factor);
     j_pre.setSize(JPRE_SIZE, int(JPRE_SIZE / img.ratio), JPRE_AAFACTOR);
+
+    j_pre.nr_threads = 1;
 
     /* main window */
     window = gtk_window_new(GTK_WINDOW_TOPLEVEL);
