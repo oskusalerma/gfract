@@ -144,7 +144,7 @@ void attr_dlg_new(image_attr_dialog** ptr, image_info* img)
                        TRUE, TRUE, 0);
     gtk_widget_show(tmp);
 
-    table = gtk_table_new(8, 2, FALSE);
+    table = gtk_table_new(5, 2, FALSE);
     gtk_table_set_row_spacings(GTK_TABLE(table), 2);
     gtk_table_set_row_spacing(GTK_TABLE(table), 2, 10);
     gtk_table_set_row_spacing(GTK_TABLE(table), 3, 15);
@@ -156,65 +156,75 @@ void attr_dlg_new(image_attr_dialog** ptr, image_info* img)
     gtk_container_set_border_width(GTK_CONTAINER(vbox), 10);
     gtk_widget_show(vbox);
 
+    int row = 0;
+
     tmp = gtk_label_new("Width:");
     gtk_misc_set_alignment(GTK_MISC(tmp), 0.0, 0.5);
-    gtk_table_attach_defaults(GTK_TABLE(table), tmp, 0, 1, 0, 1);
+    gtk_table_attach_defaults(GTK_TABLE(table), tmp, 0, 1, row, row + 1);
     gtk_widget_show(tmp);
 
     adj = gtk_adjustment_new(img->user_width, 1.0, 999999.0,
                              4.0, 4.0, 0.0);
     tmp = gtk_spin_button_new(GTK_ADJUSTMENT(adj), 0.0, 0);
-    gtk_table_attach_defaults(GTK_TABLE(table), tmp, 1, 2, 0, 1);
+    gtk_table_attach_defaults(GTK_TABLE(table), tmp, 1, 2, row, row + 1);
     g_signal_connect(GTK_OBJECT(tmp), "changed",
                        GTK_SIGNAL_FUNC(width_update),
                        dl);
     gtk_widget_show(tmp);
     dl->width = tmp;
 
+    row++;
+
     tmp = gtk_label_new("Height:");
     gtk_misc_set_alignment(GTK_MISC(tmp), 0.0, 0.5);
-    gtk_table_attach_defaults(GTK_TABLE(table), tmp, 0, 1, 1, 2);
+    gtk_table_attach_defaults(GTK_TABLE(table), tmp, 0, 1, row, row + 1);
     gtk_widget_show(tmp);
 
     adj = gtk_adjustment_new(img->user_height, 1.0, 999999.0,
                              3.0, 3.0, 0.0);
     tmp = gtk_spin_button_new(GTK_ADJUSTMENT(adj), 0.0, 0);
-    gtk_table_attach_defaults(GTK_TABLE(table), tmp, 1, 2, 1, 2);
+    gtk_table_attach_defaults(GTK_TABLE(table), tmp, 1, 2, row, row + 1);
     g_signal_connect(GTK_OBJECT(tmp), "changed",
                        GTK_SIGNAL_FUNC(height_update),
                        dl);
     gtk_widget_show(tmp);
     dl->height = tmp;
 
+    row++;
+
     tmp = gtk_label_new("Anti-aliasing factor:\n(1 = no anti-aliasing)");
     gtk_misc_set_alignment(GTK_MISC(tmp), 0.0, 0.5);
     gtk_label_set_justify(GTK_LABEL(tmp), GTK_JUSTIFY_LEFT);
-    gtk_table_attach_defaults(GTK_TABLE(table), tmp, 0, 1, 2, 3);
+    gtk_table_attach_defaults(GTK_TABLE(table), tmp, 0, 1, row, row + 1);
     gtk_widget_show(tmp);
 
     adj = gtk_adjustment_new(img->aa_factor, 1.0, 500.0, 1.0, 1.0, 0.0);
     tmp = gtk_spin_button_new(GTK_ADJUSTMENT(adj), 0.0, 0);
-    gtk_table_attach_defaults(GTK_TABLE(table), tmp, 1, 2, 2, 3);
+    gtk_table_attach_defaults(GTK_TABLE(table), tmp, 1, 2, row, row + 1);
     g_signal_connect(GTK_OBJECT(tmp), "changed",
                        GTK_SIGNAL_FUNC(aa_update),
                        dl);
     gtk_widget_show(tmp);
     dl->aa = tmp;
 
+    row++;
+
     tmp = gtk_check_button_new_with_label("Constrain ratio");
     gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(tmp), TRUE);
-    gtk_table_attach_defaults(GTK_TABLE(table), tmp, 0, 2, 3, 4);
+    gtk_table_attach_defaults(GTK_TABLE(table), tmp, 0, 2, row, row + 1);
     g_signal_connect(GTK_OBJECT(tmp), "toggled",
                        GTK_SIGNAL_FUNC(constrain_update),
                        dl);
     gtk_widget_show(tmp);
     dl->const_ra = tmp;
 
+    row++;
+
     tmp = gtk_label_new("");
     update_text(GTK_LABEL(tmp), img->user_width, img->user_height,
                 img->aa_factor);
     gtk_misc_set_alignment(GTK_MISC(tmp), 0.5, 0.5);
-    gtk_table_attach_defaults(GTK_TABLE(table), tmp, 0, 2, 4, 5);
+    gtk_table_attach_defaults(GTK_TABLE(table), tmp, 0, 2, row, row + 1);
     gtk_widget_show(tmp);
     dl->text = tmp;
 
