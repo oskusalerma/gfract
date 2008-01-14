@@ -95,6 +95,7 @@ static GtkWidget* menu_add(GtkWidget* menu, const char* name, GCallback func,
     void* arg = NULL);
 static void menu_bar_add(GtkWidget* menu, GtkWidget* submenu,
     const char* name);
+static void set_tooltip(GtkWidget* w, const char* str);
 static void show_msg_box(GtkWidget* parent, const std::string& msg);
 static GdkRectangle horiz_intersect(GdkRectangle* a1, GdkRectangle* a2);
 static GtkWidget* get_stock_image(const char* stock_id);
@@ -656,6 +657,24 @@ void create_menus(GtkWidget* vbox)
     gtk_box_pack_start(GTK_BOX(vbox), menu, FALSE, FALSE, 0);
 }
 
+void set_tooltip(GtkWidget* w, const char* str)
+{
+    static GtkTooltips* tooltips = NULL;
+
+    if (!tooltips)
+    {
+        tooltips = gtk_tooltips_new();
+    }
+
+    gtk_tooltips_set_tip(tooltips, w, str, NULL);
+
+    // TODO: GTK 2.12 has a new tooltip API and has deprecated the old
+    // one. Switch over to using that when it's widespread enough (Debian
+    // Etch has GTK 2.8, as an example). In the new API you can simply do:
+    //
+    // gtk_widget_set_tooltip_text(tmp, str);
+}
+
 GtkWidget* get_stock_image(const char* stock_id)
 {
     GtkWidget* w = gtk_image_new_from_stock(stock_id,
@@ -1193,18 +1212,18 @@ int main(int argc, char** argv)
     /* preview window */
     j_pre_window = gtk_window_new(GTK_WINDOW_TOPLEVEL);
     g_signal_connect(GTK_OBJECT(j_pre_window), "delete_event",
-                       GTK_SIGNAL_FUNC(j_pre_delete), NULL);
+                     GTK_SIGNAL_FUNC(j_pre_delete), NULL);
     gtk_window_set_title(GTK_WINDOW(j_pre_window), "Preview");
     gtk_window_set_resizable(GTK_WINDOW(j_pre_window), FALSE);
 
-    vbox = gtk_vbox_new (FALSE, 0);
-    gtk_container_add (GTK_CONTAINER (window), vbox);
-    gtk_widget_show (vbox);
+    vbox = gtk_vbox_new(FALSE, 0);
+    gtk_container_add(GTK_CONTAINER(window), vbox);
+    gtk_widget_show(vbox);
 
     create_menus(vbox);
 
-    g_signal_connect (GTK_OBJECT (window), "destroy",
-        GTK_SIGNAL_FUNC(quit), NULL);
+    g_signal_connect(GTK_OBJECT(window), "destroy",
+                     GTK_SIGNAL_FUNC(quit), NULL);
 
     /* toolbar stuff */
     hbox = gtk_hbox_new(FALSE, 5);
@@ -1214,28 +1233,31 @@ int main(int argc, char** argv)
 
     /* zoom in */
     tmp = gtk_toggle_button_new();
-    gtk_container_add(GTK_CONTAINER(tmp),
-                      get_stock_image(GTK_STOCK_ZOOM_IN));
+    set_tooltip(
+        tmp,
+        "Zoom in.\n\n"
+        "Left mouse button = increase size\n"
+        "Middle mouse button/Return = zoom\n"
+        "Right mouse button = decrease size");
+
+    gtk_container_add(GTK_CONTAINER(tmp), get_stock_image(GTK_STOCK_ZOOM_IN));
     g_signal_connect(GTK_OBJECT(tmp), "toggled",
-                       GTK_SIGNAL_FUNC(zoom_in_func), NULL);
-    gtk_box_pack_start(GTK_BOX(hbox), tmp, FALSE, FALSE,
-                       0);
-    gtk_button_set_relief(GTK_BUTTON(tmp),
-                          GTK_RELIEF_NONE);
+                     GTK_SIGNAL_FUNC(zoom_in_func), NULL);
+    gtk_box_pack_start(GTK_BOX(hbox), tmp, FALSE, FALSE, 0);
+    gtk_button_set_relief(GTK_BUTTON(tmp), GTK_RELIEF_NONE);
     GTK_WIDGET_UNSET_FLAGS(tmp, GTK_CAN_FOCUS);
     gtk_widget_show(tmp);
     tool_zoom_in = new ZoomInTool(&img, tmp);
 
     /* zoom out */
     tmp = gtk_button_new();
+    set_tooltip(tmp, "Zoom out.");
     gtk_container_add(GTK_CONTAINER(tmp),
                       get_stock_image(GTK_STOCK_ZOOM_OUT));
     g_signal_connect(GTK_OBJECT(tmp), "clicked",
-                       GTK_SIGNAL_FUNC(zoom_out_func), NULL);
-    gtk_box_pack_start(GTK_BOX(hbox), tmp, FALSE, FALSE,
-                       0);
-    gtk_button_set_relief(GTK_BUTTON(tmp),
-                          GTK_RELIEF_NONE);
+                     GTK_SIGNAL_FUNC(zoom_out_func), NULL);
+    gtk_box_pack_start(GTK_BOX(hbox), tmp, FALSE, FALSE, 0);
+    gtk_button_set_relief(GTK_BUTTON(tmp), GTK_RELIEF_NONE);
     GTK_WIDGET_UNSET_FLAGS(tmp, GTK_CAN_FOCUS);
     gtk_widget_show(tmp);
     tool_zoom_out = new ZoomOutTool(&img);
@@ -1254,21 +1276,20 @@ int main(int argc, char** argv)
     /* palette interpolation */
     palette_ip = gtk_check_button_new_with_label("Palette interpolation");
     gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(palette_ip),
-        img.palette_ip);
+                                 img.palette_ip);
     gtk_box_pack_start(GTK_BOX(hbox), palette_ip, FALSE, FALSE, 0);
     g_signal_connect(GTK_OBJECT(palette_ip), "toggled",
-        GTK_SIGNAL_FUNC(toggle_palette_ip), NULL);
+                     GTK_SIGNAL_FUNC(toggle_palette_ip), NULL);
     gtk_widget_show(palette_ip);
 
     /* recalc button */
     button = gtk_button_new();
     recalc_button_label = gtk_label_new(TEXT_STOP);
-    gtk_misc_set_alignment(GTK_MISC(recalc_button_label),
-                           0.5, 0.5);
+    gtk_misc_set_alignment(GTK_MISC(recalc_button_label), 0.5, 0.5);
     gtk_container_add(GTK_CONTAINER(button), recalc_button_label);
     gtk_widget_show(recalc_button_label);
     g_signal_connect(GTK_OBJECT(button), "clicked",
-                       GTK_SIGNAL_FUNC(recalc_button), NULL);
+                     GTK_SIGNAL_FUNC(recalc_button), NULL);
     gtk_box_pack_end(GTK_BOX(hbox), button, FALSE, FALSE, 0);
     gtk_widget_show(button);
 
@@ -1286,33 +1307,34 @@ int main(int argc, char** argv)
     /* main window drawing area */
     tmp = gtk_drawing_area_new();
     GTK_WIDGET_SET_FLAGS(tmp, GTK_CAN_FOCUS);
-    gtk_widget_set_events (tmp, GDK_KEY_PRESS_MASK |
-        GDK_BUTTON_PRESS_MASK | GDK_BUTTON_RELEASE_MASK |
-        GDK_POINTER_MOTION_MASK | GDK_EXPOSURE_MASK);
-    gtk_widget_set_size_request(tmp, (img.user_width >= MIN_WINDOW_WIDTH)
-                ? img.user_width : MIN_WINDOW_WIDTH, img.user_height);
+    gtk_widget_set_events(
+        tmp, GDK_KEY_PRESS_MASK | GDK_BUTTON_PRESS_MASK |
+        GDK_BUTTON_RELEASE_MASK | GDK_POINTER_MOTION_MASK | GDK_EXPOSURE_MASK);
+    gtk_widget_set_size_request(
+        tmp, (img.user_width >= MIN_WINDOW_WIDTH) ?
+        img.user_width : MIN_WINDOW_WIDTH, img.user_height);
     gtk_box_pack_start(GTK_BOX(vbox), tmp, TRUE, TRUE, 0);
     gtk_widget_show(tmp);
 
     g_signal_connect(GTK_OBJECT(tmp), "key_press_event",
-        GTK_SIGNAL_FUNC(key_event), NULL);
+                     GTK_SIGNAL_FUNC(key_event), NULL);
     g_signal_connect(GTK_OBJECT(tmp), "button_press_event",
-                        (GtkSignalFunc)button_press_event, NULL);
+                     (GtkSignalFunc)button_press_event, NULL);
     g_signal_connect(GTK_OBJECT(tmp), "button_release_event",
-                        (GtkSignalFunc)button_release_event, NULL);
+                     (GtkSignalFunc)button_release_event, NULL);
     g_signal_connect(GTK_OBJECT(tmp), "expose_event",
-                       GTK_SIGNAL_FUNC(expose_event), &img);
+                     GTK_SIGNAL_FUNC(expose_event), &img);
     g_signal_connect(GTK_OBJECT(tmp), "motion_notify_event",
-                       GTK_SIGNAL_FUNC(motion_event), NULL);
+                     GTK_SIGNAL_FUNC(motion_event), NULL);
     img.drawing_area = drawing_area = tmp;
 
     /* preview window drawing area */
     tmp = gtk_drawing_area_new();
-    gtk_widget_set_events (tmp, GDK_EXPOSURE_MASK);
+    gtk_widget_set_events(tmp, GDK_EXPOSURE_MASK);
     gtk_widget_set_size_request(tmp, j_pre.user_width, j_pre.user_height);
     gtk_container_add(GTK_CONTAINER(j_pre_window), tmp);
     g_signal_connect(GTK_OBJECT(tmp), "expose_event",
-                       GTK_SIGNAL_FUNC(expose_event), &j_pre);
+                     GTK_SIGNAL_FUNC(expose_event), &j_pre);
     gtk_widget_show(tmp);
     j_pre.drawing_area = tmp;
 
