@@ -93,4 +93,29 @@ private:
     GdkRectangle rect;
 };
 
+/** Crop. */
+class CropTool : public Tool
+{
+public:
+    CropTool(image_info* img, GtkWidget* toolbarButton);
+
+    virtual bool activate();
+    virtual void deactivate();
+    virtual void buttonEvent(ButtonType type, bool isPress, int x, int y);
+    virtual void moveEvent(int x, int y);
+
+private:
+    GdkRectangle getRect();
+
+    void crop();
+
+    GtkWidget* toolbarButton;
+
+    // position of first click. x1 == -1 -> not drawn on screen yet
+    int x1, y1;
+
+    // changing position of cursor
+    int x2, y2;
+};
+
 #endif

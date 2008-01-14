@@ -187,9 +187,9 @@ void ZoomInTool::zoom(void)
 {
     double xmin, xmax, ymax;
 
-    ymax = rect.y;
     xmin = rect.x;
     xmax = rect.x + rect.width - 1;
+    ymax = rect.y;
 
     get_coords(&xmin, &ymax);
     get_coords(&xmax, NULL);
@@ -234,4 +234,121 @@ gint zoom_in_callback(int arg)
     ZoomInTool::me->timerCallback(arg);
 
     return TRUE;
+}
+
+CropTool::CropTool(image_info* img, GtkWidget* toolbarButton)
+    : Tool(img)
+{
+    this->toolbarButton = toolbarButton;
+
+    x1 = -1;
+}
+
+bool CropTool::activate()
+{
+    return true;
+}
+
+void CropTool::deactivate()
+{
+    if (x1 != -1)
+    {
+        draw_xor_rect(getRect());
+        x1 = -1;
+    }
+
+    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(toolbarButton), FALSE);
+}
+
+void CropTool::buttonEvent(ButtonType type, bool isPress, int x, int y)
+{
+    if (!isPress || (type != LEFT))
+    {
+        return;
+    }
+
+    if (x1 == -1)
+    {
+        x1 = x;
+        y1 = y;
+
+        x2 = x;
+        y2 = y;
+
+        draw_xor_rect(getRect());
+    }
+    else
+    {
+        draw_xor_rect(getRect());
+
+        x2 = x;
+        y2 = y;
+
+        crop();
+
+        // disable drawing in deactivate
+        x1 = -1;
+    }
+}
+
+void CropTool::moveEvent(int x, int y)
+{
+    if (x1 != -1)
+    {
+        draw_xor_rect(getRect());
+
+        x2 = x;
+        y2 = y;
+
+        draw_xor_rect(getRect());
+    }
+}
+
+void CropTool::crop(void)
+{
+    GdkRectangle r = getRect();
+
+    double oldW = img->finfo.xmax - img->finfo.xmin;
+    double oldH = img->finfo.ymax - img->ymin();
+
+    double xmin, xmax, ymin, ymax;
+    xmin = r.x;
+    xmax = r.x + r.width;
+    ymax = r.y;
+    ymin = r.y + r.height;
+
+    get_coords(&xmin, &ymax);
+    get_coords(&xmax, &ymin);
+
+    img->finfo.xmin = xmin;
+    img->finfo.xmax = xmax;
+    img->finfo.ymax = ymax;
+
+    double newW = img->finfo.xmax - img->finfo.xmin;
+    double newH = img->finfo.ymax - ymin;
+
+    tool_deactivate();
+
+    stop_rendering(img);
+
+    img->setSize(std::max(1, int(img->user_width * (newW / oldW))),
+                 std::max(1, int(img->user_height * (newH / oldH))),
+                 img->aa_factor);
+
+    image_size_changed();
+
+    start_rendering(img);
+}
+
+GdkRectangle CropTool::getRect()
+{
+    GdkRectangle r;
+
+    r.x = std::min(x1, x2);
+    r.y = std::min(y1, y2);
+
+    r.width = abs(x1 - x2) + 1;
+    r.height = abs(y1 - y2) + 1;
+
+    return r;
 }

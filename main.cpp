@@ -80,7 +80,6 @@ struct options
 
 static gboolean io_callback(GIOChannel* source, GIOCondition condition,
     gpointer data);
-static void stop_rendering(image_info* img);
 static void start_julia_browsing(void);
 static void stop_julia_browsing(void);
 static void process_args(int argc, char** argv);
@@ -108,6 +107,10 @@ static gint j_pre_delete(GtkWidget *widget, GdkEvent *event, gpointer data);
 static gint child_reaper(gpointer nothing);
 static gint cfg_saver(gpointer nothing);
 static void tool_activate(Tool* tool);
+
+static void zoom_in_func(GtkWidget* widget);
+static void zoom_out_func(GtkWidget* widget);
+static void crop_func(GtkWidget* widget);
 
 static void invert(void);
 static void switch_fractal_type(void);
@@ -157,8 +160,9 @@ static GtkWidget* pbar = NULL;
 static GtkWidget* switch_menu_cmd = NULL;
 
 static Tool* tool_active = NULL;
+static Tool* tool_zoom_in = NULL;
 static Tool* tool_zoom_out = NULL;
-static ZoomInTool* tool_zoom_in = NULL;
+static Tool* tool_crop = NULL;
 
 /* DIALOG POINTERS */
 
@@ -474,28 +478,29 @@ void image_attr_apply_cmd(GtkWidget* w, image_attr_dialog* dl)
         gtk_spin_button_get_value_as_int(GTK_SPIN_BUTTON(dl->height)),
         gtk_spin_button_get_value_as_int(GTK_SPIN_BUTTON(dl->aa)));
 
-    if (img.user_width < MIN_WINDOW_WIDTH) {
-        /* limit minimum window width to MIN_WINDOW_WIDTH and handle
-           this case in the expose event */
-        gtk_widget_set_size_request(drawing_area,
-                              MIN_WINDOW_WIDTH, img.user_height);
-    } else {
-        gtk_widget_set_size_request(drawing_area,
-                              img.user_width, img.user_height);
-    }
-
     img.nr_threads = gtk_spin_button_get_value_as_int(
         GTK_SPIN_BUTTON(dl->threads));
 
-    start_rendering(&img);
+    image_size_changed();
 
-    resize_preview();
+    start_rendering(&img);
 
     if (st.julia_browsing) {
         gtk_widget_hide(j_pre_window);
         gtk_widget_show(j_pre_window);
         start_rendering(&j_pre);
     }
+}
+
+void image_size_changed()
+{
+    /* limit minimum window width to MIN_WINDOW_WIDTH and handle this case
+       in the expose event */
+    gtk_widget_set_size_request(
+        drawing_area, std::max(img.user_width, MIN_WINDOW_WIDTH),
+        img.user_height);
+
+    resize_preview();
 
     cfgNeedsSaving = true;
 }
@@ -812,6 +817,8 @@ void draw_xor_rect(const GdkRectangle& rect)
     gdk_gc_set_function(drawing_area->style->white_gc, GDK_COPY);
 }
 
+// FIXME: can we get rid of these almost-duplicate functions?
+
 void zoom_in_func(GtkWidget* widget)
 {
     tool_activate(tool_zoom_in);
@@ -820,6 +827,11 @@ void zoom_in_func(GtkWidget* widget)
 void zoom_out_func(GtkWidget* widget)
 {
     tool_activate(tool_zoom_out);
+}
+
+void crop_func(GtkWidget* widget)
+{
+    tool_activate(tool_crop);
 }
 
 void recalc_button(GtkWidget* widget)
@@ -1233,6 +1245,7 @@ int main(int argc, char** argv)
 
     /* zoom in */
     tmp = gtk_toggle_button_new();
+
     set_tooltip(
         tmp,
         "Zoom in.\n\n"
@@ -1261,6 +1274,24 @@ int main(int argc, char** argv)
     GTK_WIDGET_UNSET_FLAGS(tmp, GTK_CAN_FOCUS);
     gtk_widget_show(tmp);
     tool_zoom_out = new ZoomOutTool(&img);
+
+    /* crop */
+    tmp = gtk_toggle_button_new();
+
+    set_tooltip(
+        tmp,
+        "Crop.\n\n"
+        "Select the desired area by clicking on two opposite corners.");
+
+    gtk_container_add(GTK_CONTAINER(tmp),
+                      get_stock_image(GTK_STOCK_ZOOM_FIT));
+    g_signal_connect(GTK_OBJECT(tmp), "toggled",
+                     GTK_SIGNAL_FUNC(crop_func), NULL);
+    gtk_box_pack_start(GTK_BOX(hbox), tmp, FALSE, FALSE, 0);
+    gtk_button_set_relief(GTK_BUTTON(tmp), GTK_RELIEF_NONE);
+    GTK_WIDGET_UNSET_FLAGS(tmp, GTK_CAN_FOCUS);
+    gtk_widget_show(tmp);
+    tool_crop = new CropTool(&img, tmp);
 
     /* depth label */
     button = gtk_label_new("Depth");
