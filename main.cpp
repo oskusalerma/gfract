@@ -109,9 +109,7 @@ static gint child_reaper(gpointer nothing);
 static gint cfg_saver(gpointer nothing);
 static void tool_activate(Tool* tool);
 
-static void zoom_in_func(GtkWidget* widget);
-static void zoom_out_func(GtkWidget* widget);
-static void crop_func(GtkWidget* widget);
+static void tool_func(GtkWidget* widget, Tool* tool);
 
 static void invert(void);
 static void switch_fractal_type(void);
@@ -831,21 +829,9 @@ void draw_xor_rect(const GdkRectangle& rect)
     gdk_gc_set_function(drawing_area->style->white_gc, GDK_COPY);
 }
 
-// FIXME: can we get rid of these almost-duplicate functions?
-
-void zoom_in_func(GtkWidget* widget)
+void tool_func(GtkWidget* widget, Tool* tool)
 {
-    tool_activate(tool_zoom_in);
-}
-
-void zoom_out_func(GtkWidget* widget)
-{
-    tool_activate(tool_zoom_out);
-}
-
-void crop_func(GtkWidget* widget)
-{
-    tool_activate(tool_crop);
+    tool_activate(tool);
 }
 
 void recalc_button(GtkWidget* widget)
@@ -1259,6 +1245,7 @@ int main(int argc, char** argv)
 
     /* zoom in */
     tmp = gtk_toggle_button_new();
+    tool_zoom_in = new ZoomInTool(&img, tmp);
 
     set_tooltip(
         tmp,
@@ -1269,28 +1256,28 @@ int main(int argc, char** argv)
 
     gtk_container_add(GTK_CONTAINER(tmp), get_stock_image(GTK_STOCK_ZOOM_IN));
     g_signal_connect(GTK_OBJECT(tmp), "toggled",
-                     GTK_SIGNAL_FUNC(zoom_in_func), NULL);
+                     GTK_SIGNAL_FUNC(tool_func), tool_zoom_in);
     gtk_box_pack_start(GTK_BOX(hbox), tmp, FALSE, FALSE, 0);
     gtk_button_set_relief(GTK_BUTTON(tmp), GTK_RELIEF_NONE);
     GTK_WIDGET_UNSET_FLAGS(tmp, GTK_CAN_FOCUS);
     gtk_widget_show(tmp);
-    tool_zoom_in = new ZoomInTool(&img, tmp);
 
     /* zoom out */
+    tool_zoom_out = new ZoomOutTool(&img);
     tmp = gtk_button_new();
     set_tooltip(tmp, "Zoom out.");
     gtk_container_add(GTK_CONTAINER(tmp),
                       get_stock_image(GTK_STOCK_ZOOM_OUT));
     g_signal_connect(GTK_OBJECT(tmp), "clicked",
-                     GTK_SIGNAL_FUNC(zoom_out_func), NULL);
+                     GTK_SIGNAL_FUNC(tool_func), tool_zoom_out);
     gtk_box_pack_start(GTK_BOX(hbox), tmp, FALSE, FALSE, 0);
     gtk_button_set_relief(GTK_BUTTON(tmp), GTK_RELIEF_NONE);
     GTK_WIDGET_UNSET_FLAGS(tmp, GTK_CAN_FOCUS);
     gtk_widget_show(tmp);
-    tool_zoom_out = new ZoomOutTool(&img);
 
     /* crop */
     tmp = gtk_toggle_button_new();
+    tool_crop = new CropTool(&img, tmp);
 
     set_tooltip(
         tmp,
@@ -1300,12 +1287,11 @@ int main(int argc, char** argv)
     gtk_container_add(GTK_CONTAINER(tmp),
                       get_stock_image(GTK_STOCK_ZOOM_FIT));
     g_signal_connect(GTK_OBJECT(tmp), "toggled",
-                     GTK_SIGNAL_FUNC(crop_func), NULL);
+                     GTK_SIGNAL_FUNC(tool_func), tool_crop);
     gtk_box_pack_start(GTK_BOX(hbox), tmp, FALSE, FALSE, 0);
     gtk_button_set_relief(GTK_BUTTON(tmp), GTK_RELIEF_NONE);
     GTK_WIDGET_UNSET_FLAGS(tmp, GTK_CAN_FOCUS);
     gtk_widget_show(tmp);
-    tool_crop = new CropTool(&img, tmp);
 
     /* depth label */
     button = gtk_label_new("Depth");
