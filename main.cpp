@@ -98,6 +98,7 @@ static void set_tooltip(GtkWidget* w, const char* str);
 static void show_msg_box(GtkWidget* parent, const std::string& msg);
 static GdkRectangle horiz_intersect(GdkRectangle* a1, GdkRectangle* a2);
 static GtkWidget* get_stock_image(const char* stock_id);
+static GtkWidget* get_inline_png_image(const guint8* data);
 
 static gint expose_event(GtkWidget* widget, GdkEventExpose* event,
                          image_info* img);
@@ -684,6 +685,19 @@ GtkWidget* get_stock_image(const char* stock_id)
 {
     GtkWidget* w = gtk_image_new_from_stock(stock_id,
                                             GTK_ICON_SIZE_SMALL_TOOLBAR);
+
+    gtk_widget_show(w);
+
+    return w;
+}
+
+GtkWidget* get_inline_png_image(const guint8* data)
+{
+    GdkPixbuf* pixbuf = gdk_pixbuf_new_from_inline(
+        -1, data, FALSE, NULL);
+
+    GtkWidget* w = gtk_image_new_from_pixbuf(pixbuf);
+
     gtk_widget_show(w);
 
     return w;

@@ -5,6 +5,9 @@ main.o misc.o my_png.o pal_rot_dlg.o palette.o timer.o palettes.o \
 image_info.o CondVar.o Mutex.o RenderThread.o Thread.o WorkQueue.o \
 Config.o Tool.o
 
+# toolbar icons
+ICON_FILES :=
+
 CXX := g++
 
 DEFS := -Wall -ansi -pedantic -D_REENTRANT -D_GNU_SOURCE \
@@ -31,6 +34,12 @@ $(GTK_FRONTEND): $(GTK_FRONTEND_OBJS)
 
 palettes.cpp: make_palettes.py $(PALETTES)
 	./make_palettes.py
+
+main.o: $(ICON_FILES)
+
+%.pix: %.png Makefile
+	@echo Generating inline image for $<
+	@gdk-pixbuf-csource --name $(*)_pix --raw $< > $@
 
 clean:
 	rm -f $(GTK_FRONTEND) $(GTK_FRONTEND_OBJS) palettes.cpp
