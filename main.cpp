@@ -142,11 +142,8 @@ static GtkWidget* pbar = NULL;
 typedef std::list<Tool*> tools_t;
 tools_t tools;
 
-static Tool* tool_active = NULL;
-
-// FIXME: have a tool_dummy that points to DummyTool that does nothing,
-// and point to that instead of NULL when no tool is active, allowing us
-// to remove all if (tool_active) checks
+static Tool* tool_dummy = new DummyTool();
+static Tool* tool_active = tool_dummy;
 
 /* DIALOG POINTERS */
 
@@ -239,11 +236,13 @@ void reset_fractal_cmd(void)
 
 void tool_deactivate()
 {
-    tool_activate(NULL);
+    tool_activate(tool_dummy);
 }
 
 void tool_activate(Tool* tool)
 {
+    gf_a(tool);
+
     // this function sometimes gets called recursively from inside
     // tool->activate() (and maybe tool->deactivate()), before we've
     // assigned anything to tool_active, leading to seriously weird
@@ -259,21 +258,18 @@ void tool_activate(Tool* tool)
         funcActive = true;
     }
 
-    if (tool_active)
-    {
-        tool_active->deactivate();
-    }
+    tool_active->deactivate();
 
-    if (!tool || (tool == tool_active))
+    if (tool == tool_active)
     {
-        tool_active = NULL;
+        tool_active = tool_dummy;
     }
     else
     {
-        tool_active = tool->activate() ? tool : NULL;
+        tool_active = tool->activate() ? tool : tool_dummy;
     }
 
-    if (tool_active)
+    if (tool_active != tool_dummy)
     {
         // if we have a tool still active, make sure the drawing area has
         // the keyboard focus so our tool gets any keyboard input
@@ -779,32 +775,23 @@ gint button_press_event(GtkWidget* widget, GdkEventButton* event)
         return TRUE;
     }
 
-    if (tool_active)
-    {
-        tool_active->buttonEvent(Tool::fromGDKButtonType(event->button),
-                                 true, int(event->x), int(event->y));
-    }
+    tool_active->buttonEvent(Tool::fromGDKButtonType(event->button),
+                             true, int(event->x), int(event->y));
 
     return TRUE;
 }
 
 gint button_release_event(GtkWidget* widget, GdkEventButton* event)
 {
-    if (tool_active)
-    {
-        tool_active->buttonEvent(Tool::fromGDKButtonType(event->button),
-                                 false, int(event->x), int(event->y));
-    }
+    tool_active->buttonEvent(Tool::fromGDKButtonType(event->button),
+                             false, int(event->x), int(event->y));
 
     return TRUE;
 }
 
 gint motion_event(GtkWidget* widget, GdkEventMotion* event)
 {
-    if (tool_active)
-    {
-        tool_active->moveEvent(int(event->x), int(event->y));
-    }
+    tool_active->moveEvent(int(event->x), int(event->y));
 
     return TRUE;
 }
@@ -857,7 +844,7 @@ gint expose_event(GtkWidget* widget, GdkEventExpose* event,
 
 gint key_event(GtkWidget* widget, GdkEventKey* event)
 {
-    if (tool_active && tool_active->keyEvent(event))
+    if (tool_active->keyEvent(event))
     {
         return TRUE;
     }

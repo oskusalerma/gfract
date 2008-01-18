@@ -45,6 +45,18 @@ protected:
     image_info* img;
 };
 
+/** Dummy tool, does absolutely nothing. Useful if you want to have a
+    pointer to a tool that can sometimes point to no real tool and call
+    functions on that pointer without checking if it's NULL all the
+    time. */
+class DummyTool : public Tool
+{
+public:
+    DummyTool() : Tool(NULL) { }
+
+    virtual bool activate() { return false; }
+};
+
 /** Zoom out. */
 class ZoomOutTool : public Tool
 {
