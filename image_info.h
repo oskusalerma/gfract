@@ -30,14 +30,6 @@ public:
     // coordinates */
     double xmin,xmax,ymax;
 
-    // FIXME: get rid of these relics, no need anymore with built-in
-    // history (also make the "reset fractal" switch back to mandelbrot
-    // mode)
-
-    // saved mandelbrot coordinates. we need these when switching back
-    // from julia mode.
-    double old_xmin, old_xmax, old_ymax;
-
     // different fractal types' parameters
     union {
         julia_info julia;

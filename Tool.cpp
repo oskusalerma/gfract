@@ -1,6 +1,5 @@
 #include "Tool.h"
 #include <gdk/gdkkeysyms.h>
-#include "image_info.h"
 #include "main.h"
 
 const float ZoomInTool::ZOOM_BOX_WIDTH = 0.35;
@@ -8,6 +7,7 @@ const float ZoomInTool::ZOOM_BOX_WIDTH = 0.35;
 ZoomInTool* ZoomInTool::me = NULL;
 
 static gint zoom_in_callback(int arg);
+static gint j_pre_delete(GtkWidget *widget, GdkEvent *event, gpointer data);
 
 Tool::Tool(image_info* img)
 {
@@ -351,4 +351,159 @@ GdkRectangle CropTool::getRect()
     r.height = abs(y1 - y2) + 1;
 
     return r;
+}
+
+JuliaTool::JuliaTool(image_info* img, GtkWidget* toolbarButton)
+    : Tool(img)
+{
+    this->toolbarButton = toolbarButton;
+
+    j_pre.j_pre = true;
+    j_pre.finfo.type = JULIA;
+
+    j_pre.depth = 300;
+    j_pre.nr_threads = 1;
+
+    j_pre.finfo.xmin = -2.0;
+    j_pre.finfo.xmax = 1.5;
+    j_pre.finfo.ymax = 1.25;
+
+    j_pre.finfo.u.julia.c_re = 0.3;
+    j_pre.finfo.u.julia.c_im = 0.6;
+
+    j_pre.setSize(JPRE_SIZE, int(JPRE_SIZE / img->ratio), JPRE_AA_FACTOR);
+
+    /* preview window */
+    j_pre_window = gtk_window_new(GTK_WINDOW_TOPLEVEL);
+    g_signal_connect(GTK_OBJECT(j_pre_window), "delete_event",
+                     GTK_SIGNAL_FUNC(j_pre_delete), NULL);
+    gtk_window_set_title(GTK_WINDOW(j_pre_window), "Preview");
+    gtk_window_set_resizable(GTK_WINDOW(j_pre_window), FALSE);
+
+    /* preview window drawing area */
+    GtkWidget* tmp = gtk_drawing_area_new();
+    gtk_widget_set_events(tmp, GDK_EXPOSURE_MASK);
+    gtk_widget_set_size_request(tmp, j_pre.user_width, j_pre.user_height);
+    gtk_container_add(GTK_CONTAINER(j_pre_window), tmp);
+    g_signal_connect(GTK_OBJECT(tmp), "expose_event",
+                     GTK_SIGNAL_FUNC(expose_event), &j_pre);
+    gtk_widget_show(tmp);
+
+    j_pre.drawing_area = tmp;
+}
+
+bool JuliaTool::activate()
+{
+    if (img->finfo.type == MANDELBROT)
+    {
+        gtk_widget_show(j_pre_window);
+        start_rendering(&j_pre);
+
+        return true;
+    }
+    else
+    {
+        img->finfo.xmin = old_xmin;
+        img->finfo.xmax = old_xmax;
+        img->finfo.ymax = old_ymax;
+        img->finfo.type = MANDELBROT;
+
+        start_rendering(img);
+
+        gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(toolbarButton), FALSE);
+
+        return false;
+    }
+}
+
+void JuliaTool::deactivate()
+{
+    stop_rendering(&j_pre);
+    gtk_widget_hide(j_pre_window);
+
+    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(toolbarButton), FALSE);
+}
+
+void JuliaTool::buttonEvent(ButtonType type, bool isPress, int x, int y)
+{
+    if ((type != LEFT) || !isPress)
+    {
+        return;
+    }
+
+    double tx = x;
+    double ty = y;
+
+    get_coords(&tx, &ty);
+
+    img->finfo.u.julia.c_re = tx;
+    img->finfo.u.julia.c_im = ty;
+
+    old_xmin = img->finfo.xmin;
+    old_xmax = img->finfo.xmax;
+    old_ymax = img->finfo.ymax;
+
+    img->finfo.xmin = j_pre.finfo.xmin;
+    img->finfo.xmax = j_pre.finfo.xmax;
+    img->finfo.ymax = j_pre.finfo.ymax;
+
+    img->finfo.type = JULIA;
+
+    tool_deactivate();
+
+    start_rendering(img);
+}
+
+void JuliaTool::moveEvent(int x, int y)
+{
+    j_pre.finfo.u.julia.c_re = x;
+    j_pre.finfo.u.julia.c_im = y;
+    get_coords(&j_pre.finfo.u.julia.c_re, &j_pre.finfo.u.julia.c_im);
+
+    start_rendering(&j_pre);
+}
+
+void JuliaTool::sizeEvent(bool toolIsActive)
+{
+    stop_rendering(&j_pre);
+
+    int xw,yw;
+
+    if ((JPRE_SIZE / img->ratio) < JPRE_SIZE)
+    {
+        xw = JPRE_SIZE;
+        yw = int(JPRE_SIZE / img->ratio);
+
+        if (yw == 0)
+            yw = 1;
+    }
+    else
+    {
+        xw = int(JPRE_SIZE * img->ratio);
+
+        if (xw == 0)
+            xw = 1;
+
+        yw = JPRE_SIZE;
+    }
+
+    j_pre.setSize(xw, yw, JPRE_AA_FACTOR);
+    gtk_widget_set_size_request(j_pre.drawing_area, xw, yw);
+
+    if (toolIsActive)
+    {
+        gtk_widget_hide(j_pre_window);
+        gtk_widget_show(j_pre_window);
+
+        start_rendering(&j_pre);
+    }
+}
+
+// called when user closes the Julia preview window. nothing's actually
+// deleted, we just hide the window by deactivating the tool.
+gint j_pre_delete(GtkWidget* widget, GdkEvent* event, gpointer data)
+{
+    tool_deactivate();
+
+    return TRUE;
 }

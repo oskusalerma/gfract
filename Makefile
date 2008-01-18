@@ -6,7 +6,7 @@ image_info.o CondVar.o Mutex.o RenderThread.o Thread.o WorkQueue.o \
 Config.o Tool.o
 
 # toolbar icons
-ICON_FILES :=
+ICON_FILES := mandel_icon.pix
 
 CXX := g++
 

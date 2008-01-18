@@ -27,6 +27,7 @@
 #include "palette.h"
 #include "timer.h"
 #include "version.h"
+#include "mandel_icon.pix"
 
 #define MIN_WINDOW_WIDTH 320
 
@@ -34,18 +35,9 @@
 #define TEXT_RECALC     "Recalc"
 #define TEXT_STOP       "Stop"
 
-/* julia preview size */
-#define JPRE_SIZE    160
-#define JPRE_AAFACTOR 2
-
 // config section/key names
 static const std::string sectionMisc("misc");
 static const std::string keyPalette("palette");
-
-struct status_info
-{
-    int julia_browsing;
-};
 
 static std::string cfgFilename;
 
@@ -80,10 +72,7 @@ struct options
 
 static gboolean io_callback(GIOChannel* source, GIOCondition condition,
     gpointer data);
-static void start_julia_browsing(void);
-static void stop_julia_browsing(void);
 static void process_args(int argc, char** argv);
-static void resize_preview(void);
 static int find_palette_by_name(const std::string& name, bool must_exist);
 static void quit(void);
 static void redraw_image(image_info* img);
@@ -100,11 +89,8 @@ static GdkRectangle horiz_intersect(GdkRectangle* a1, GdkRectangle* a2);
 static GtkWidget* get_stock_image(const char* stock_id);
 static GtkWidget* get_inline_png_image(const guint8* data);
 
-static gint expose_event(GtkWidget* widget, GdkEventExpose* event,
-                         image_info* img);
 static gint key_event(GtkWidget* widget, GdkEventKey* event);
 static gint button_press_event(GtkWidget* widget, GdkEventButton* event);
-static gint j_pre_delete(GtkWidget *widget, GdkEvent *event, gpointer data);
 static gint child_reaper(gpointer nothing);
 static gint cfg_saver(gpointer nothing);
 static void tool_activate(Tool* tool);
@@ -112,7 +98,6 @@ static void tool_activate(Tool* tool);
 static void tool_func(GtkWidget* widget, Tool* tool);
 
 static void invert(void);
-static void switch_fractal_type(void);
 static void print_help(void);
 static void print_version(void);
 static void save_config();
@@ -144,24 +129,25 @@ static void save_cmd(void);
 static void reset_fractal_cmd(void);
 
 /* general stuff we need to have */
-static status_info st;
 static image_info img;
-static image_info j_pre;
 static Timer timing_info;
 static options opts;
-static GtkWidget* j_pre_window = NULL;
 static GtkWidget* window = NULL;
 static GtkWidget* drawing_area = NULL;
 static GtkWidget* recalc_button_label = NULL;
 static GtkWidget* depth_spin = NULL;
 static GtkWidget* palette_ip = NULL;
 static GtkWidget* pbar = NULL;
-static GtkWidget* switch_menu_cmd = NULL;
 
 static Tool* tool_active = NULL;
 static Tool* tool_zoom_in = NULL;
 static Tool* tool_zoom_out = NULL;
 static Tool* tool_crop = NULL;
+static Tool* tool_julia = NULL;
+
+// FIXME: have a tool_dummy that points to DummyTool that does nothing,
+// and point to that instead of NULL when no tool is active, allowing us
+// to remove all if (tool_active) checks
 
 /* DIALOG POINTERS */
 
@@ -259,6 +245,21 @@ void tool_deactivate()
 
 void tool_activate(Tool* tool)
 {
+    // this function sometimes gets called recursively from inside
+    // tool->activate() (and maybe tool->deactivate()), before we've
+    // assigned anything to tool_active, leading to seriously weird
+    // issues, so prevent recursive calls from doing anything.
+    static bool funcActive = false;
+
+    if (funcActive)
+    {
+        return;
+    }
+    else
+    {
+        funcActive = true;
+    }
+
     if (tool_active)
     {
         tool_active->deactivate();
@@ -280,20 +281,8 @@ void tool_activate(Tool* tool)
 
         gtk_widget_grab_focus(img.drawing_area);
     }
-}
 
-void switch_fractal_type(void)
-{
-    if (img.finfo.type == MANDELBROT) {
-        if (!st.julia_browsing)
-            start_julia_browsing();
-    } else if (img.finfo.type == JULIA) {
-        img.finfo.xmin = img.finfo.old_xmin;
-        img.finfo.xmax = img.finfo.old_xmax;
-        img.finfo.ymax = img.finfo.old_ymax;
-        img.finfo.type = MANDELBROT;
-        start_rendering(&img);
-    }
+    funcActive = false;
 }
 
 void reapply_palette(void)
@@ -370,22 +359,6 @@ void init_misc(void)
 
     fhistory.push_back(new fractal_info(img.finfo));
     fhistory_current_pos = 0;
-
-    /* init preview */
-    j_pre.depth = 300;
-
-    j_pre.finfo.xmin = -2.0;
-    j_pre.finfo.xmax = 1.5;
-    j_pre.finfo.ymax = 1.25;
-
-    j_pre.finfo.u.julia.c_re = 0.3;
-    j_pre.finfo.u.julia.c_im = 0.6;
-
-    j_pre.j_pre = true;
-    j_pre.finfo.type = JULIA;
-
-    /* misc init */
-    st.julia_browsing = false;
 
     opts.timing = 0;
 }
@@ -483,12 +456,6 @@ void image_attr_apply_cmd(GtkWidget* w, image_attr_dialog* dl)
     image_size_changed();
 
     start_rendering(&img);
-
-    if (st.julia_browsing) {
-        gtk_widget_hide(j_pre_window);
-        gtk_widget_show(j_pre_window);
-        start_rendering(&j_pre);
-    }
 }
 
 void image_size_changed()
@@ -499,7 +466,13 @@ void image_size_changed()
         drawing_area, std::max(img.user_width, MIN_WINDOW_WIDTH),
         img.user_height);
 
-    resize_preview();
+    if (tool_active)
+    {
+        // FIXME: need to call sizeEvent for all the inactive tools as
+        // well, giving a 'false' parameter
+
+        tool_active->sizeEvent(true);
+    }
 
     cfgNeedsSaving = true;
 }
@@ -507,30 +480,6 @@ void image_size_changed()
 void main_refresh(void)
 {
     start_rendering(&img);
-}
-
-/* change preview window to reflect possible new aspect ratio */
-void resize_preview(void)
-{
-    stop_rendering(&j_pre);
-
-    int xw,yw;
-
-    if (JPRE_SIZE/img.ratio < JPRE_SIZE) {
-        xw = JPRE_SIZE;
-        yw = int(JPRE_SIZE/img.ratio);
-        if (yw == 0)
-            yw = 1;
-    }
-    else {
-        xw = int(JPRE_SIZE*img.ratio);
-        if (xw == 0)
-            xw = 1;
-        yw = JPRE_SIZE;
-    }
-
-    j_pre.setSize(xw, yw, JPRE_AAFACTOR);
-    gtk_widget_set_size_request(j_pre.drawing_area, xw, yw);
 }
 
 void do_attr_dialog(void)
@@ -570,6 +519,8 @@ gint child_reaper(gpointer nothing)
     return TRUE;
 }
 
+// FIXME: split this into two functions and get rid of the ridiculous
+// pointer-arguments
 void get_coords(double* x, double* y)
 {
     if (y != NULL)
@@ -634,9 +585,6 @@ void create_menus(GtkWidget* vbox)
     menu = gtk_menu_new();
     menu_add(menu, "Attributes...", do_attr_dialog);
     menu_add(menu, "Coloring...", do_color_dialog);
-    menu_add(menu, NULL, NULL);
-    switch_menu_cmd = menu_add(menu, "Switch fractal type",
-                             switch_fractal_type);
     menu_bar_add(menu_bar, menu, "_Image");
 
     menu2 = gtk_menu_new();
@@ -797,28 +745,6 @@ void stop_rendering(image_info* img)
     }
 }
 
-void start_julia_browsing(void)
-{
-    st.julia_browsing = true;
-    gtk_widget_show(j_pre_window);
-    gtk_widget_set_sensitive(switch_menu_cmd, FALSE);
-}
-
-void stop_julia_browsing(void)
-{
-    stop_rendering(&j_pre);
-    st.julia_browsing = false;
-    gtk_widget_hide(j_pre_window);
-    gtk_widget_set_sensitive(switch_menu_cmd, TRUE);
-}
-
-gint j_pre_delete(GtkWidget* widget, GdkEvent* event, gpointer data)
-{
-    stop_julia_browsing();
-
-    return TRUE;
-}
-
 void draw_xor_rect(const GdkRectangle& rect)
 {
     gdk_gc_set_function(drawing_area->style->white_gc, GDK_XOR);
@@ -863,28 +789,6 @@ gint button_press_event(GtkWidget* widget, GdkEventButton* event)
                                  true, int(event->x), int(event->y));
     }
 
-    if (st.julia_browsing) {
-        if (event->button == 1) {
-            img.finfo.u.julia.c_re = event->x;
-            img.finfo.u.julia.c_im = event->y;
-
-            get_coords(&img.finfo.u.julia.c_re, &img.finfo.u.julia.c_im);
-            stop_julia_browsing();
-
-            /* save old coordinates */
-            img.finfo.old_xmin = img.finfo.xmin;
-            img.finfo.old_xmax = img.finfo.xmax;
-            img.finfo.old_ymax = img.finfo.ymax;
-
-            img.finfo.xmin = j_pre.finfo.xmin;
-            img.finfo.xmax = j_pre.finfo.xmax;
-            img.finfo.ymax = j_pre.finfo.ymax;
-            img.finfo.type = JULIA;
-
-            start_rendering(&img);
-        }
-    }
-
     return TRUE;
 }
 
@@ -904,16 +808,6 @@ gint motion_event(GtkWidget* widget, GdkEventMotion* event)
     if (tool_active)
     {
         tool_active->moveEvent(int(event->x), int(event->y));
-    }
-
-    // FIXME: julia browsing should be a Tool (it interacts very badly if
-    // you try to do that and zooming in at the same time, for example)
-
-    if (st.julia_browsing) {
-        j_pre.finfo.u.julia.c_re = event->x;
-        j_pre.finfo.u.julia.c_im = event->y;
-        get_coords(&j_pre.finfo.u.julia.c_re, &j_pre.finfo.u.julia.c_im);
-        start_rendering(&j_pre);
     }
 
     return TRUE;
@@ -1074,11 +968,13 @@ void quit(void)
 {
     cfg_saver(NULL);
 
-    stop_rendering(&img);
-    stop_rendering(&j_pre);
+    // TODO: in theory we should do the two operations below also for
+    // JuliaTool::j_pre, but in practise I've never seen anything bad
+    // happen because we don't, and we're quitting anyway, so not much
+    // scope for damages anyway.
 
+    stop_rendering(&img);
     img.stopThreads();
-    j_pre.stopThreads();
 
     gtk_main_quit();
 }
@@ -1212,21 +1108,11 @@ int main(int argc, char** argv)
     g_timeout_add(10*1000, cfg_saver, NULL);
 
     img.setSize(img.user_width, img.user_height, img.aa_factor);
-    j_pre.setSize(JPRE_SIZE, int(JPRE_SIZE / img.ratio), JPRE_AAFACTOR);
-
-    j_pre.nr_threads = 1;
 
     /* main window */
     window = gtk_window_new(GTK_WINDOW_TOPLEVEL);
     gtk_window_set_resizable(GTK_WINDOW(window), FALSE);
     gtk_widget_realize(window);
-
-    /* preview window */
-    j_pre_window = gtk_window_new(GTK_WINDOW_TOPLEVEL);
-    g_signal_connect(GTK_OBJECT(j_pre_window), "delete_event",
-                     GTK_SIGNAL_FUNC(j_pre_delete), NULL);
-    gtk_window_set_title(GTK_WINDOW(j_pre_window), "Preview");
-    gtk_window_set_resizable(GTK_WINDOW(j_pre_window), FALSE);
 
     vbox = gtk_vbox_new(FALSE, 0);
     gtk_container_add(GTK_CONTAINER(window), vbox);
@@ -1288,6 +1174,19 @@ int main(int argc, char** argv)
                       get_stock_image(GTK_STOCK_ZOOM_FIT));
     g_signal_connect(GTK_OBJECT(tmp), "toggled",
                      GTK_SIGNAL_FUNC(tool_func), tool_crop);
+    gtk_box_pack_start(GTK_BOX(hbox), tmp, FALSE, FALSE, 0);
+    gtk_button_set_relief(GTK_BUTTON(tmp), GTK_RELIEF_NONE);
+    GTK_WIDGET_UNSET_FLAGS(tmp, GTK_CAN_FOCUS);
+    gtk_widget_show(tmp);
+
+    /* julia mode */
+    tmp = gtk_toggle_button_new();
+    tool_julia = new JuliaTool(&img, tmp);
+    set_tooltip(tmp, "Switch between Mandelbrot/Julia modes.");
+    gtk_container_add(GTK_CONTAINER(tmp),
+                      get_inline_png_image(mandel_icon_pix));
+    g_signal_connect(GTK_OBJECT(tmp), "toggled",
+                     GTK_SIGNAL_FUNC(tool_func), tool_julia);
     gtk_box_pack_start(GTK_BOX(hbox), tmp, FALSE, FALSE, 0);
     gtk_button_set_relief(GTK_BUTTON(tmp), GTK_RELIEF_NONE);
     GTK_WIDGET_UNSET_FLAGS(tmp, GTK_CAN_FOCUS);
@@ -1358,16 +1257,6 @@ int main(int argc, char** argv)
     g_signal_connect(GTK_OBJECT(tmp), "motion_notify_event",
                      GTK_SIGNAL_FUNC(motion_event), NULL);
     img.drawing_area = drawing_area = tmp;
-
-    /* preview window drawing area */
-    tmp = gtk_drawing_area_new();
-    gtk_widget_set_events(tmp, GDK_EXPOSURE_MASK);
-    gtk_widget_set_size_request(tmp, j_pre.user_width, j_pre.user_height);
-    gtk_container_add(GTK_CONTAINER(j_pre_window), tmp);
-    g_signal_connect(GTK_OBJECT(tmp), "expose_event",
-                     GTK_SIGNAL_FUNC(expose_event), &j_pre);
-    gtk_widget_show(tmp);
-    j_pre.drawing_area = tmp;
 
     start_rendering(&img);
     gtk_widget_show(window);

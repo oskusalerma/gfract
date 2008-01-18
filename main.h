@@ -14,5 +14,6 @@ void image_size_changed();
 void get_coords(double* x, double* y);
 void tool_deactivate();
 
+gint expose_event(GtkWidget* widget, GdkEventExpose* event, image_info* img);
 
 #endif /* __MAIN_H */

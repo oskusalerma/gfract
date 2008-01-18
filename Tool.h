@@ -2,8 +2,7 @@
 #define TOOL_H
 
 #include <gtk/gtk.h>
-
-class image_info;
+#include "image_info.h"
 
 /** Base class for all tools. */
 class Tool
@@ -38,6 +37,9 @@ public:
     /** Keyboard event. If return value is true, the event was consumed by
         the tool. */
     virtual bool keyEvent(GdkEventKey* ev) { return false; }
+
+    /** Size of the image has changed. */
+    virtual void sizeEvent(bool toolIsActive) { }
 
 protected:
     image_info* img;
@@ -116,6 +118,35 @@ private:
 
     // changing position of cursor
     int x2, y2;
+};
+
+/** Switch between Mandelbrot/Julia modes. */
+class JuliaTool : public Tool
+{
+public:
+    JuliaTool(image_info* img, GtkWidget* toolbarButton);
+
+    virtual bool activate();
+    virtual void deactivate();
+    virtual void buttonEvent(ButtonType type, bool isPress, int x, int y);
+    virtual void moveEvent(int x, int y);
+    virtual void sizeEvent(bool toolIsActive);
+
+private:
+    enum
+    {
+        JPRE_SIZE = 160,
+        JPRE_AA_FACTOR = 2
+    };
+
+    GtkWidget* toolbarButton;
+
+    // Julia preview info & window
+    image_info j_pre;
+    GtkWidget* j_pre_window;
+
+    // Mandelbrot coordinates when we switched away from it
+    double old_xmin, old_xmax, old_ymax;
 };
 
 #endif
