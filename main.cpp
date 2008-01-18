@@ -139,11 +139,10 @@ static GtkWidget* depth_spin = NULL;
 static GtkWidget* palette_ip = NULL;
 static GtkWidget* pbar = NULL;
 
+typedef std::list<Tool*> tools_t;
+tools_t tools;
+
 static Tool* tool_active = NULL;
-static Tool* tool_zoom_in = NULL;
-static Tool* tool_zoom_out = NULL;
-static Tool* tool_crop = NULL;
-static Tool* tool_julia = NULL;
 
 // FIXME: have a tool_dummy that points to DummyTool that does nothing,
 // and point to that instead of NULL when no tool is active, allowing us
@@ -466,12 +465,9 @@ void image_size_changed()
         drawing_area, std::max(img.user_width, MIN_WINDOW_WIDTH),
         img.user_height);
 
-    if (tool_active)
+    for (tools_t::iterator it = tools.begin(); it != tools.end(); it++)
     {
-        // FIXME: need to call sizeEvent for all the inactive tools as
-        // well, giving a 'false' parameter
-
-        tool_active->sizeEvent(true);
+        (*it)->sizeEvent(*it == tool_active);
     }
 
     cfgNeedsSaving = true;
@@ -1131,7 +1127,7 @@ int main(int argc, char** argv)
 
     /* zoom in */
     tmp = gtk_toggle_button_new();
-    tool_zoom_in = new ZoomInTool(&img, tmp);
+    tools.push_back(new ZoomInTool(&img, tmp));
 
     set_tooltip(
         tmp,
@@ -1142,20 +1138,20 @@ int main(int argc, char** argv)
 
     gtk_container_add(GTK_CONTAINER(tmp), get_stock_image(GTK_STOCK_ZOOM_IN));
     g_signal_connect(GTK_OBJECT(tmp), "toggled",
-                     GTK_SIGNAL_FUNC(tool_func), tool_zoom_in);
+                     GTK_SIGNAL_FUNC(tool_func), tools.back());
     gtk_box_pack_start(GTK_BOX(hbox), tmp, FALSE, FALSE, 0);
     gtk_button_set_relief(GTK_BUTTON(tmp), GTK_RELIEF_NONE);
     GTK_WIDGET_UNSET_FLAGS(tmp, GTK_CAN_FOCUS);
     gtk_widget_show(tmp);
 
     /* zoom out */
-    tool_zoom_out = new ZoomOutTool(&img);
+    tools.push_back(new ZoomOutTool(&img));
     tmp = gtk_button_new();
     set_tooltip(tmp, "Zoom out.");
     gtk_container_add(GTK_CONTAINER(tmp),
                       get_stock_image(GTK_STOCK_ZOOM_OUT));
     g_signal_connect(GTK_OBJECT(tmp), "clicked",
-                     GTK_SIGNAL_FUNC(tool_func), tool_zoom_out);
+                     GTK_SIGNAL_FUNC(tool_func), tools.back());
     gtk_box_pack_start(GTK_BOX(hbox), tmp, FALSE, FALSE, 0);
     gtk_button_set_relief(GTK_BUTTON(tmp), GTK_RELIEF_NONE);
     GTK_WIDGET_UNSET_FLAGS(tmp, GTK_CAN_FOCUS);
@@ -1163,7 +1159,7 @@ int main(int argc, char** argv)
 
     /* crop */
     tmp = gtk_toggle_button_new();
-    tool_crop = new CropTool(&img, tmp);
+    tools.push_back(new CropTool(&img, tmp));
 
     set_tooltip(
         tmp,
@@ -1173,7 +1169,7 @@ int main(int argc, char** argv)
     gtk_container_add(GTK_CONTAINER(tmp),
                       get_stock_image(GTK_STOCK_ZOOM_FIT));
     g_signal_connect(GTK_OBJECT(tmp), "toggled",
-                     GTK_SIGNAL_FUNC(tool_func), tool_crop);
+                     GTK_SIGNAL_FUNC(tool_func), tools.back());
     gtk_box_pack_start(GTK_BOX(hbox), tmp, FALSE, FALSE, 0);
     gtk_button_set_relief(GTK_BUTTON(tmp), GTK_RELIEF_NONE);
     GTK_WIDGET_UNSET_FLAGS(tmp, GTK_CAN_FOCUS);
@@ -1181,12 +1177,12 @@ int main(int argc, char** argv)
 
     /* julia mode */
     tmp = gtk_toggle_button_new();
-    tool_julia = new JuliaTool(&img, tmp);
+    tools.push_back(new JuliaTool(&img, tmp));
     set_tooltip(tmp, "Switch between Mandelbrot/Julia modes.");
     gtk_container_add(GTK_CONTAINER(tmp),
                       get_inline_png_image(mandel_icon_pix));
     g_signal_connect(GTK_OBJECT(tmp), "toggled",
-                     GTK_SIGNAL_FUNC(tool_func), tool_julia);
+                     GTK_SIGNAL_FUNC(tool_func), tools.back());
     gtk_box_pack_start(GTK_BOX(hbox), tmp, FALSE, FALSE, 0);
     gtk_button_set_relief(GTK_BUTTON(tmp), GTK_RELIEF_NONE);
     GTK_WIDGET_UNSET_FLAGS(tmp, GTK_CAN_FOCUS);
