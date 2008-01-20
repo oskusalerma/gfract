@@ -185,18 +185,13 @@ bool ZoomInTool::keyEvent(GdkEventKey* ev)
 
 void ZoomInTool::zoom(void)
 {
-    double xmin, xmax, ymax;
+    double xmin = img->getX(rect.x);
+    double xmax = img->getX(rect.x + rect.width);
+    double ymax = img->getY(rect.y);
 
-    xmin = rect.x;
-    xmax = rect.x + rect.width - 1;
-    ymax = rect.y;
-
-    get_coords(&xmin, &ymax);
-    get_coords(&xmax, NULL);
-
-    img->finfo.ymax = ymax;
     img->finfo.xmin = xmin;
     img->finfo.xmax = xmax;
+    img->finfo.ymax = ymax;
 
     tool_deactivate();
 
@@ -311,14 +306,10 @@ void CropTool::crop(void)
     double oldW = img->finfo.xmax - img->finfo.xmin;
     double oldH = img->finfo.ymax - img->ymin();
 
-    double xmin, xmax, ymin, ymax;
-    xmin = r.x;
-    xmax = r.x + r.width;
-    ymax = r.y;
-    ymin = r.y + r.height;
-
-    get_coords(&xmin, &ymax);
-    get_coords(&xmax, &ymin);
+    double xmin = img->getX(r.x);
+    double xmax = img->getX(r.x + r.width);
+    double ymax = img->getY(r.y);
+    double ymin = img->getY(r.y + r.height);
 
     img->finfo.xmin = xmin;
     img->finfo.xmax = xmax;
@@ -431,13 +422,8 @@ void JuliaTool::buttonEvent(ButtonType type, bool isPress, int x, int y)
         return;
     }
 
-    double tx = x;
-    double ty = y;
-
-    get_coords(&tx, &ty);
-
-    img->finfo.u.julia.c_re = tx;
-    img->finfo.u.julia.c_im = ty;
+    img->finfo.u.julia.c_re = img->getX(x);
+    img->finfo.u.julia.c_im = img->getY(y);
 
     old_xmin = img->finfo.xmin;
     old_xmax = img->finfo.xmax;
@@ -456,9 +442,8 @@ void JuliaTool::buttonEvent(ButtonType type, bool isPress, int x, int y)
 
 void JuliaTool::moveEvent(int x, int y)
 {
-    j_pre.finfo.u.julia.c_re = x;
-    j_pre.finfo.u.julia.c_im = y;
-    get_coords(&j_pre.finfo.u.julia.c_re, &j_pre.finfo.u.julia.c_im);
+    j_pre.finfo.u.julia.c_re = img->getX(x);
+    j_pre.finfo.u.julia.c_im = img->getY(y);
 
     start_rendering(&j_pre);
 }

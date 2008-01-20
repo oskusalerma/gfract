@@ -56,6 +56,11 @@ struct image_info : boost::noncopyable
     // reset to default Mandelbrot position
     void resetPosition();
 
+    // given Y or X coordinate in pixel space with the upper left corner
+    // being (0,0), transform it into the fractal coordinate space
+    double getY(int y);
+    double getX(int x);
+
     // get ymin
     double ymin();
 

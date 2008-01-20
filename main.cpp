@@ -511,19 +511,6 @@ gint child_reaper(gpointer nothing)
     return TRUE;
 }
 
-// FIXME: split this into two functions and get rid of the ridiculous
-// pointer-arguments
-void get_coords(double* x, double* y)
-{
-    if (y != NULL)
-        *y = img.finfo.ymax - ((img.finfo.xmax - img.finfo.xmin) /
-                               img.user_width) * (*y);
-
-    if (x != NULL)
-        *x = ((*x)/(double)img.user_width) *
-            (img.finfo.xmax - img.finfo.xmin) + img.finfo.xmin;
-}
-
 void menu_add_item(GtkWidget* menu, GtkWidget* item)
 {
     gtk_menu_shell_append(GTK_MENU_SHELL(menu), item);
