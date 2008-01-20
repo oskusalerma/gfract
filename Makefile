@@ -10,9 +10,7 @@ ICON_FILES := mandel_icon.pix
 
 CXX := g++
 
-DEFS := -Wall -ansi -pedantic -D_REENTRANT -D_GNU_SOURCE \
--DGDK_DISABLE_DEPRECATED -DGTK_DISABLE_DEPRECATED
-
+DEFS := -Wall -ansi -pedantic -D_REENTRANT -D_GNU_SOURCE
 DEFS := $(shell pkg-config --cflags gtk+-2.0 libpng) $(DEFS)
 
 CXXFLAGS := $(DEFS) -O2 -fomit-frame-pointer -ffast-math
