@@ -41,6 +41,21 @@ std::string fractal_info::to_str() const
     return s;
 }
 
+double fractal_info::getY(const image_info& img, int y)
+{
+    return ymax - ((xmax - xmin) / img.user_width) * y;
+}
+
+double fractal_info::getX(const image_info& img, int x)
+{
+    return xmin + ((xmax - xmin) / img.user_width) * x;
+}
+
+double fractal_info::ymin(const image_info& img)
+{
+    return getY(img, img.user_height);
+}
+
 bool fractal_info::operator==(const fractal_info& rhs) const
 {
     if ((type != rhs.type) ||
@@ -101,17 +116,17 @@ void image_info::resetPosition()
 
 double image_info::getY(int y)
 {
-    return finfo.ymax - ((finfo.xmax - finfo.xmin) / user_width) * y;
+    return finfo.getY(*this, y);
 }
 
 double image_info::getX(int x)
 {
-    return finfo.xmin + ((finfo.xmax - finfo.xmin) / user_width) * x;
+    return finfo.getX(*this, x);
 }
 
 double image_info::ymin()
 {
-    return getY(user_height);
+    return finfo.ymin(*this);
 }
 
 void image_info::load(Config* cfg, const std::string& section)

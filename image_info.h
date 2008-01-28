@@ -14,6 +14,7 @@
 #include "misc.h"
 
 class Config;
+class image_info;
 
 struct julia_info
 {
@@ -35,14 +36,23 @@ public:
         julia_info julia;
     } u;
 
+    // given Y or X coordinate in pixel space with the upper left corner
+    // being (0,0), transform it into the fractal coordinate space
+    double getY(const image_info& img, int y);
+    double getX(const image_info& img, int x);
+
+    // get ymin
+    double ymin(const image_info& img);
+
     std::string to_str() const;
 
     bool operator==(const fractal_info& rhs) const;
     bool operator!=(const fractal_info& rhs) const;
 };
 
-struct image_info : boost::noncopyable
+class image_info : boost::noncopyable
 {
+public:
     image_info();
 
     enum {
