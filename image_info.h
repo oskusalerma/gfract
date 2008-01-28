@@ -38,11 +38,11 @@ public:
 
     // given Y or X coordinate in pixel space with the upper left corner
     // being (0,0), transform it into the fractal coordinate space
-    double getY(const image_info& img, int y);
-    double getX(const image_info& img, int x);
+    double getY(const image_info& img, int y) const;
+    double getX(const image_info& img, int x) const;
 
     // get ymin
-    double ymin(const image_info& img);
+    double ymin(const image_info& img) const;
 
     std::string to_str() const;
 
@@ -68,17 +68,17 @@ public:
 
     // given Y or X coordinate in pixel space with the upper left corner
     // being (0,0), transform it into the fractal coordinate space
-    double getY(int y);
-    double getX(int x);
+    double getY(int y) const;
+    double getX(int x) const;
 
     // get ymin
-    double ymin();
+    double ymin() const;
 
     // load config. NOTE: setSize MUST be called after this.
     void load(Config* cfg, const std::string& section);
 
     // save config
-    void save(Config* cfg, const std::string& section);
+    void save(Config* cfg, const std::string& section) const;
 
     // allocate memory for an image of the given size
     void setSize(int w, int h, int aaFactor);
@@ -90,7 +90,7 @@ public:
     void clearLinesDone();
 
     // returns true if all the lines needed to AA the given row are rendered
-    bool isAALineComplete(int row);
+    bool isAALineComplete(int row) const;
 
     // delete/create threads as needed (nr_threads = new thread count,
     // thread.size() = old thread count)

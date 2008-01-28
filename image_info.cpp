@@ -41,17 +41,17 @@ std::string fractal_info::to_str() const
     return s;
 }
 
-double fractal_info::getY(const image_info& img, int y)
+double fractal_info::getY(const image_info& img, int y) const
 {
     return ymax - ((xmax - xmin) / img.user_width) * y;
 }
 
-double fractal_info::getX(const image_info& img, int x)
+double fractal_info::getX(const image_info& img, int x) const
 {
     return xmin + ((xmax - xmin) / img.user_width) * x;
 }
 
-double fractal_info::ymin(const image_info& img)
+double fractal_info::ymin(const image_info& img) const
 {
     return getY(img, img.user_height);
 }
@@ -114,17 +114,17 @@ void image_info::resetPosition()
     finfo.ymax = 1.2;
 }
 
-double image_info::getY(int y)
+double image_info::getY(int y) const
 {
     return finfo.getY(*this, y);
 }
 
-double image_info::getX(int x)
+double image_info::getX(int x) const
 {
     return finfo.getX(*this, x);
 }
 
-double image_info::ymin()
+double image_info::ymin() const
 {
     return finfo.ymin(*this);
 }
@@ -138,7 +138,7 @@ void image_info::load(Config* cfg, const std::string& section)
     nr_threads = cfg->getInt(section, keyThreads, DEFAULT_NR_THREADS, 1);
 }
 
-void image_info::save(Config* cfg, const std::string& section)
+void image_info::save(Config* cfg, const std::string& section) const
 {
     cfg->setInt(section, keyWidth, user_width);
     cfg->setInt(section, keyHeight, user_height);
@@ -218,7 +218,7 @@ void image_info::clearLinesDone()
     memset(&lines_done_vec.front(), false, lines_done_vec.size());
 }
 
-bool image_info::isAALineComplete(int row)
+bool image_info::isAALineComplete(int row) const
 {
     gf_a(aa_factor > 1);
     gf_a(row >= 0);
