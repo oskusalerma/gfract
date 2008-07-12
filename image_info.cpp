@@ -1,4 +1,5 @@
 #include "image_info.h"
+#include <string.h>
 #include "Config.h"
 #include "RenderThread.h"
 #include "externs.h"

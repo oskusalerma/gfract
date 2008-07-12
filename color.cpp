@@ -1,6 +1,7 @@
+#include <algorithm>
 #include <math.h>
 #include <stdio.h>
-#include <algorithm>
+#include <string.h>
 #include "misc.h"
 #include "color.h"
 
