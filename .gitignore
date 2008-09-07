@@ -1,0 +1,4 @@
+gfract
+*.o
+*.pix
+palettes.cpp
