@@ -1,3 +1,22 @@
+1.0
+---
+
+- Threading support: Fractal calculation should now scale up pretty much
+  linearly with the number of CPU cores in the system.
+
+- Add 22 palettes that are compiled into the program executable and thus
+  always available, thereby removing the dependency on external palette
+  files.
+
+- Save important parameters to ~/.gfractrc
+
+- Crop tool.
+
+- Huge internal code re-organizations.
+
+- Lots and lots of other changes.
+
+
 0.33
 ----
 
@@ -7,12 +26,14 @@ Jasper Lievisse Adriaanse <jasper@nedbsd.nl>:
 
  - Makefile tweaking for OpenBSD
 
+
 0.32
 ----
 
 - Pressing Enter while zooming activates the selected zoom region.
 
 - Add "Reset fractal" menu commmand.
+
 
 0.31
 ----
@@ -22,6 +43,7 @@ James W. Morris <james@jwm-art.net>:
  - Add -DGTK_DISABLE_DEPRECATED, fix all resulting errors.
 
  - Add 'Apply' button to attributes dialog.
+
 
 0.3
 ---
@@ -38,6 +60,7 @@ James W. Morris <james@jwm-art.net>:
 
 - Documentation changes
 
+
 0.21
 ----
 
@@ -50,6 +73,7 @@ James W. Morris <james@jwm-art.net>:
 - Changed from using tmpnam to mkstemp.
 
 - Clarified the license issue by putting the program under GPL.
+
 
 0.2
 ---
@@ -72,6 +96,7 @@ James W. Morris <james@jwm-art.net>:
 - Lots of bugfixes.
 
 - First really public release.
+
 
 0.1
 ---
