@@ -1003,7 +1003,7 @@ void load_config()
 {
     using namespace boost::filesystem;
 
-    if (!exists(path(cfgFilename, native)))
+    if (!exists(path(cfgFilename)))
     {
         return;
     }

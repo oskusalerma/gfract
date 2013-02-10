@@ -16,7 +16,7 @@ DEFS := $(shell pkg-config --cflags gtk+-2.0 libpng) $(DEFS)
 CXXFLAGS := $(DEFS) -O2 -fomit-frame-pointer -ffast-math
 #CXXFLAGS := $(DEFS) -g
 
-LDFLAGS := -lz -lpthread -lboost_regex -lboost_filesystem
+LDFLAGS := -lz -lpthread -lboost_regex -lboost_filesystem -lboost_system
 LDFLAGS := $(shell pkg-config --libs gtk+-2.0 libpng) $(LDFLAGS)
 
 HEADERS := $(wildcard *.h)
