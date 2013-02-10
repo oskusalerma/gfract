@@ -340,7 +340,9 @@ void load_palette_cmd(void)
 
 void load_builtin_palette_cmd(void* arg)
 {
-    int n = reinterpret_cast<int>(arg);
+    // doesn't compile on 64-bit systems unless we go
+    // void* -> int64_t -> int
+    int n = reinterpret_cast<int64_t>(arg);
 
     palette_load_builtin(n);
     reapply_palette();

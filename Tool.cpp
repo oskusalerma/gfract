@@ -6,7 +6,7 @@ const float ZoomInTool::ZOOM_BOX_WIDTH = 0.35;
 
 ZoomInTool* ZoomInTool::me = NULL;
 
-static gint zoom_in_callback(int arg);
+static gint zoom_in_callback(void* arg);
 static gint j_pre_delete(GtkWidget *widget, GdkEvent *event, gpointer data);
 
 Tool::Tool(image_info* img)
@@ -153,7 +153,7 @@ void ZoomInTool::buttonEvent(ButtonType type, bool isPress, int x, int y)
         {
             timer_id = g_timeout_add(ZOOM_INTERVAL,
                                      (GtkFunction)zoom_in_callback,
-                                     (gpointer)(2 * zoom_dir));
+                                     (void*)(2 * zoom_dir));
         }
 
         draw_xor_rect(rect);
@@ -224,9 +224,11 @@ void ZoomInTool::timerCallback(int arg)
     draw_xor_rect(rect);
 }
 
-gint zoom_in_callback(int arg)
+gint zoom_in_callback(void* arg)
 {
-    ZoomInTool::me->timerCallback(arg);
+    // doesn't compile on 64-bit systems unless we go
+    // void* -> int64_t -> int
+    ZoomInTool::me->timerCallback(reinterpret_cast<int64_t>(arg));
 
     return TRUE;
 }
