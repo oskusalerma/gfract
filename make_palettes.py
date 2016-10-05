@@ -37,7 +37,7 @@ def addPalette(filename):
         g = int(m.group(2))
         b = int(m.group(3))
 
-        out.write("'\\x%x', '\\x%x', '\\x%x',\n" % (r, g, b))
+        out.write("%d,%d,%d,\n" % (r, g, b))
 
     out.write('};\n\n')
 
