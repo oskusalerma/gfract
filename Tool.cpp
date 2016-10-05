@@ -124,7 +124,7 @@ void ZoomInTool::buttonEvent(ButtonType type, bool isPress, int x, int y)
         return;
     }
 
-    int zoom_dir = 0;
+    intptr_t zoom_dir = 0;
 
     if (type == LEFT)
     {
